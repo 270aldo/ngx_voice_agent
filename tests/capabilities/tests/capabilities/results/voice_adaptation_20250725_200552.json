@@ -1,0 +1,77 @@
+{
+  "test_suite": "Multi-Voice Adaptation",
+  "timestamp": "2025-07-25T20:05:38.025728",
+  "voice_scenarios": [
+    {
+      "scenario": "motivational_athlete",
+      "expected_voice": "Alex Rivera",
+      "detected_voices": [],
+      "voice_consistency": 0,
+      "trait_matches": [],
+      "response_analysis": []
+    },
+    {
+      "scenario": "empathetic_burnout",
+      "expected_voice": "Maria Gutierrez",
+      "detected_voices": [],
+      "voice_consistency": 0,
+      "trait_matches": [],
+      "response_analysis": []
+    },
+    {
+      "scenario": "technical_engineer",
+      "expected_voice": "Robert Chen",
+      "detected_voices": [],
+      "voice_consistency": 0,
+      "trait_matches": [],
+      "response_analysis": []
+    },
+    {
+      "scenario": "transformation_coach",
+      "expected_voice": "Isabella Rodriguez",
+      "detected_voices": [],
+      "voice_consistency": 0,
+      "trait_matches": [],
+      "response_analysis": []
+    },
+    {
+      "scenario": "direct_ceo",
+      "expected_voice": "Daniel Patel",
+      "detected_voices": [],
+      "voice_consistency": 0,
+      "trait_matches": [],
+      "response_analysis": []
+    },
+    {
+      "scenario": "educational_teacher",
+      "expected_voice": "Laura Mitchell",
+      "detected_voices": [],
+      "voice_consistency": 0,
+      "trait_matches": [],
+      "response_analysis": []
+    },
+    {
+      "scenario": "strategic_consultant",
+      "expected_voice": "Marcus Johnson",
+      "detected_voices": [],
+      "voice_consistency": 0,
+      "trait_matches": [],
+      "response_analysis": []
+    }
+  ],
+  "voice_switching_test": {
+    "test_name": "voice_switching",
+    "profile": "Sofia Chang",
+    "voice_changes": [],
+    "switching_success_rate": 0
+  },
+  "global_metrics": {
+    "total_scenarios": 7,
+    "successful_tests": 7,
+    "adaptation_success_rate": 0.0,
+    "avg_voice_consistency": 0.0,
+    "unique_voices_detected": 0,
+    "voice_list": [],
+    "switching_success_rate": 0
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "test_name": "Progressive Load Test 200-500 Users",
+  "timestamp": "20250724_173116",
+  "total_duration_minutes": 2.005299218495687,
+  "stages": [
+    {
+      "timestamp": "2025-07-24T17:31:16.455832",
+      "stage": "Stage 1: Baseline Load",
+      "total_users": 200,
+      "total_requests": 25200,
+      "successful_requests": 12600,
+      "failed_requests": 12600,
+      "avg_response_time_ms": 184.74136690853695,
+      "p50_response_time_ms": 160.10510921478271,
+      "p95_response_time_ms": 413.97784948349,
+      "p99_response_time_ms": 457.1635937690735,
+      "max_response_time_ms": 535.355806350708,
+      "requests_per_second": 38177.8413012831,
+      "error_rate_percent": 50.0,
+      "cpu_usage_percent": 0.0,
+      "memory_usage_percent": 0.2960205078125,
+      "active_connections": 0
+    }
+  ],
+  "summary": {
+    "stages_completed": 1,
+    "max_users_tested": 200,
+    "overall_success_rate": 50.0,
+    "errors_encountered": 0
+  },
+  "errors": []
+}

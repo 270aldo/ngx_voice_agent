@@ -1,0 +1,100 @@
+{
+    "version": 1,
+    "disable_existing_loggers": false,
+    "formatters": {
+        "default": {
+            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S"
+        },
+        "detailed": {
+            "format": "%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S"
+        },
+        "json": {
+            "class": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "format": "%(asctime)s %(name)s %(levelname)s %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S"
+        }
+    },
+    "filters": {
+        "health_filter": {
+            "()": "src.utils.logging_filters.HealthCheckFilter"
+        }
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": "INFO",
+            "formatter": "default",
+            "stream": "ext://sys.stdout"
+        },
+        "error_console": {
+            "class": "logging.StreamHandler",
+            "level": "ERROR",
+            "formatter": "detailed",
+            "stream": "ext://sys.stderr"
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "INFO",
+            "formatter": "detailed",
+            "filename": "logs/app.log",
+            "maxBytes": 10485760,
+            "backupCount": 5,
+            "filters": ["health_filter"]
+        },
+        "error_file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "ERROR",
+            "formatter": "detailed",
+            "filename": "logs/error.log",
+            "maxBytes": 10485760,
+            "backupCount": 5
+        },
+        "json_file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "INFO",
+            "formatter": "json",
+            "filename": "logs/app.json",
+            "maxBytes": 10485760,
+            "backupCount": 3,
+            "filters": ["health_filter"]
+        }
+    },
+    "loggers": {
+        "": {
+            "level": "INFO",
+            "handlers": ["console", "file", "json_file"]
+        },
+        "src": {
+            "level": "INFO",
+            "handlers": ["console", "file", "json_file"],
+            "propagate": false
+        },
+        "uvicorn": {
+            "level": "INFO",
+            "handlers": ["console", "file"]
+        },
+        "uvicorn.error": {
+            "level": "INFO",
+            "handlers": ["console", "error_file", "error_console"]
+        },
+        "uvicorn.access": {
+            "level": "INFO",
+            "handlers": ["console", "file"],
+            "filters": ["health_filter"]
+        },
+        "sqlalchemy": {
+            "level": "WARNING",
+            "handlers": ["file"]
+        },
+        "httpx": {
+            "level": "WARNING",
+            "handlers": ["file"]
+        },
+        "openai": {
+            "level": "INFO",
+            "handlers": ["file"]
+        }
+    }
+}

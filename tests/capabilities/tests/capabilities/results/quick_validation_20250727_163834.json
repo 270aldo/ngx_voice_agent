@@ -1,0 +1,47 @@
+{
+  "timestamp": "2025-07-27T16:38:34.444461",
+  "api_url": "http://localhost:8000",
+  "validations": {
+    "basic_conversation": {
+      "conversation_works": true,
+      "mentions_ngx": false,
+      "mentions_prime": false,
+      "personalized": false,
+      "total_responses": 3
+    },
+    "hie_mention": {
+      "hie_explained": false,
+      "agents_mentioned": 0,
+      "agent_list": [],
+      "impossible_to_clone": false
+    },
+    "tier_detection": {
+      "tier_detection_works": false,
+      "tier_detected": false,
+      "archetype_detected": false,
+      "appropriate_for_ceo": false
+    },
+    "empathy": {
+      "empathy_shown": false,
+      "empathy_indicators": 0,
+      "empathy_words_found": [],
+      "validates_feelings": false
+    },
+    "roi_personalization": {
+      "roi_mentioned": false,
+      "personalized_calculation": false,
+      "profession_specific": false,
+      "roi_indicators": 0
+    }
+  },
+  "capabilities_working": {
+    "basic_conversation": true,
+    "hie_integration": false,
+    "tier_detection": false,
+    "empathy": false,
+    "roi_personalization": false
+  },
+  "total_capabilities": 5,
+  "working_capabilities": 1,
+  "success_rate": 20.0
+}

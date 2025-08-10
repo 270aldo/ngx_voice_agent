@@ -1,0 +1,128 @@
+groups:
+  - name: ngx_voice_agent_alerts
+    interval: 30s
+    rules:
+      # API Health Alerts
+      - alert: APIDown
+        expr: up{job="ngx-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "NGX Voice Agent API is down"
+          description: "The NGX Voice Agent API has been down for more than 2 minutes."
+
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="ngx-api"}[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High API response time"
+          description: "95th percentile response time is above 2 seconds for 5 minutes."
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{job="ngx-api",status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 5% for the last 5 minutes."
+
+      # Resource Alerts
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 85% for 5 minutes."
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 80% for 10 minutes."
+
+      # ML Model Alerts
+      - alert: LowConversionRate
+        expr: rate(conversion_success_total[1h]) / rate(conversations_total[1h]) < 0.2
+        for: 30m
+        labels:
+          severity: warning
+          component: ml
+        annotations:
+          summary: "Low conversion rate"
+          description: "Conversion rate has dropped below 20% for 30 minutes."
+
+      - alert: MLModelPerformanceDegraded
+        expr: ml_model_accuracy < 0.7
+        for: 15m
+        labels:
+          severity: warning
+          component: ml
+        annotations:
+          summary: "ML model performance degraded"
+          description: "ML model accuracy is below 70% threshold."
+
+      - alert: HighPredictionLatency
+        expr: histogram_quantile(0.95, rate(ml_prediction_duration_seconds_bucket[5m])) > 1
+        for: 10m
+        labels:
+          severity: warning
+          component: ml
+        annotations:
+          summary: "High ML prediction latency"
+          description: "95th percentile ML prediction time is above 1 second."
+
+      # External Service Alerts
+      - alert: OpenAIServiceDown
+        expr: openai_api_availability == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: external
+        annotations:
+          summary: "OpenAI API unavailable"
+          description: "Cannot connect to OpenAI API for 5 minutes."
+
+      - alert: SupabaseConnectionFailure
+        expr: supabase_connection_active == 0
+        for: 3m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Supabase connection failure"
+          description: "Cannot connect to Supabase database for 3 minutes."
+
+      # Business Metrics Alerts
+      - alert: NoNewConversations
+        expr: increase(conversations_started_total[30m]) == 0
+        for: 30m
+        labels:
+          severity: info
+          component: business
+        annotations:
+          summary: "No new conversations"
+          description: "No new conversations started in the last 30 minutes."
+
+      - alert: HighAbandonmentRate
+        expr: rate(conversations_abandoned_total[1h]) / rate(conversations_started_total[1h]) > 0.5
+        for: 30m
+        labels:
+          severity: warning
+          component: business
+        annotations:
+          summary: "High conversation abandonment rate"
+          description: "More than 50% of conversations are being abandoned."

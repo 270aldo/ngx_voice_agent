@@ -1,0 +1,190 @@
+# Archivos de entorno
+.env
+.env.*
+.env.local
+.env.production
+!env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
+
+# Entornos virtuales
+venv/
+ENV/
+env/
+.venv/
+.venv_clean/
+test_venv/
+myenv/
+pythonenv*/
+
+# Logs
+logs/
+*.log
+*.log.*
+log/
+
+# Archivos de sistema operativo
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Editores/IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+*~
+.project
+.pydevproject
+.settings/
+.sublime-*
+
+# Archivos temporales
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.cache
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# pyenv
+.python-version
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Node (para SDKs)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+.nox/
+instance/
+.webassets-cache
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets y configuración sensible
+secrets/
+.secrets/
+*.pem
+*.key
+*.cert
+
+# Test results and reports
+**/test_results/
+**/*results*.json
+**/*result*.json
+coverage_report/
+coverage_reports/
+htmlcov/
+.coverage
+.coverage.*
+*.coverage
+test-results/
+junit/
+*.xml
+
+# Performance testing
+load_testing/*.log
+load_testing/results/
+performance_test_results/
+benchmark_results/
+
+# Temporary and backup files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*~
+*.swp
+*.swo
+*.orig
+*_backup*
+*_old*
+* 2.py
+* copy.py
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# Output files
+*.out
+output/
+outputs/
+
+# Cache directories
+.cache/
+__cache__/
+*.cache
+
+# Documentation builds
+docs/_build/
+docs/build/
+site/
+
+# Pytest
+.pytest_cache/
+pytestdebug.log
+
+# Profiling
+*.prof
+*.lprof
+profile_output/
+
+# Security
+security_scan_results/
+vulnerability_reports/

@@ -1,0 +1,446 @@
+name: Daily Security & Performance Checks
+
+on:
+  schedule:
+    # Run daily at 2:00 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      check_type:
+        description: 'Type of check to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - security
+          - performance
+          - dependencies
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # Daily dependency vulnerability scanning
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    if: github.event.inputs.check_type == 'all' || github.event.inputs.check_type == 'dependencies' || github.event.inputs.check_type == 'security' || github.event_name == 'schedule'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install security scanning tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install safety pip-audit osv-scanner
+          pip install -r requirements.txt
+
+      - name: Run safety check
+        run: |
+          safety check --json --output safety-daily.json || echo "Safety scan completed"
+
+      - name: Run pip-audit
+        run: |
+          pip-audit --format=json --output=pip-audit-daily.json || echo "Pip-audit completed"
+
+      - name: Run OSV Scanner
+        run: |
+          osv-scanner --format json requirements.txt > osv-daily.json || echo "OSV scan completed"
+
+      - name: Analyze vulnerability results
+        run: |
+          python -c "
+          import json
+          import sys
+          
+          vulnerabilities = []
+          
+          # Check safety results
+          try:
+              with open('safety-daily.json') as f:
+                  safety_data = json.load(f)
+                  if safety_data.get('vulnerabilities'):
+                      vulnerabilities.extend(safety_data['vulnerabilities'])
+          except:
+              pass
+          
+          # Check pip-audit results
+          try:
+              with open('pip-audit-daily.json') as f:
+                  audit_data = json.load(f)
+                  if audit_data.get('vulnerabilities'):
+                      vulnerabilities.extend(audit_data['vulnerabilities'])
+          except:
+              pass
+          
+          # Check OSV results
+          try:
+              with open('osv-daily.json') as f:
+                  osv_data = json.load(f)
+                  if osv_data.get('results'):
+                      for result in osv_data['results']:
+                          if result.get('packages'):
+                              vulnerabilities.extend(result['packages'])
+          except:
+              pass
+          
+          print(f'Found {len(vulnerabilities)} vulnerabilities')
+          
+          if len(vulnerabilities) > 10:  # Alert threshold
+              print('❌ High number of vulnerabilities detected')
+              sys.exit(1)
+          elif len(vulnerabilities) > 0:
+              print('⚠️ Some vulnerabilities detected')
+              sys.exit(0)
+          else:
+              print('✅ No critical vulnerabilities found')
+          "
+
+      - name: Upload vulnerability reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: daily-vulnerability-reports
+          path: |
+            safety-daily.json
+            pip-audit-daily.json
+            osv-daily.json
+
+  # Daily security posture check
+  security-posture:
+    name: Security Posture Check
+    runs-on: ubuntu-latest
+    if: github.event.inputs.check_type == 'all' || github.event.inputs.check_type == 'security' || github.event_name == 'schedule'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install security tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit semgrep
+          pip install -r requirements.txt
+
+      - name: Run bandit security scan
+        run: |
+          bandit -r src/ -f json -o bandit-daily.json || echo "Bandit scan completed"
+
+      - name: Run semgrep security rules
+        run: |
+          semgrep --config=auto src/ --json --output=semgrep-daily.json || echo "Semgrep scan completed"
+
+      - name: Check for sensitive data exposure
+        run: |
+          # Check for potential API keys, secrets, etc.
+          grep -r -i "api[_-]key\|secret\|password\|token" src/ --exclude-dir=__pycache__ > potential-secrets.txt || echo "No obvious secrets found"
+
+      - name: Analyze security results
+        run: |
+          python -c "
+          import json
+          import sys
+          
+          high_severity_issues = 0
+          medium_severity_issues = 0
+          
+          # Check bandit results
+          try:
+              with open('bandit-daily.json') as f:
+                  bandit_data = json.load(f)
+                  for result in bandit_data.get('results', []):
+                      if result.get('issue_severity') == 'HIGH':
+                          high_severity_issues += 1
+                      elif result.get('issue_severity') == 'MEDIUM':
+                          medium_severity_issues += 1
+          except:
+              pass
+          
+          # Check semgrep results
+          try:
+              with open('semgrep-daily.json') as f:
+                  semgrep_data = json.load(f)
+                  for result in semgrep_data.get('results', []):
+                      severity = result.get('extra', {}).get('severity', '').upper()
+                      if severity == 'ERROR':
+                          high_severity_issues += 1
+                      elif severity == 'WARNING':
+                          medium_severity_issues += 1
+          except:
+              pass
+          
+          print(f'High severity issues: {high_severity_issues}')
+          print(f'Medium severity issues: {medium_severity_issues}')
+          
+          if high_severity_issues > 0:
+              print('❌ High severity security issues detected')
+              sys.exit(1)
+          elif medium_severity_issues > 5:
+              print('⚠️ Multiple medium severity security issues detected')
+              sys.exit(0)
+          else:
+              print('✅ Security posture acceptable')
+          "
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: daily-security-reports
+          path: |
+            bandit-daily.json
+            semgrep-daily.json
+            potential-secrets.txt
+
+  # Performance regression check
+  performance-check:
+    name: Performance Regression Check
+    runs-on: ubuntu-latest
+    if: github.event.inputs.check_type == 'all' || github.event.inputs.check_type == 'performance' || github.event_name == 'schedule'
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install locust memory-profiler psutil
+
+      - name: Set up test environment
+        run: |
+          cp env.example .env
+          echo "TESTING=true" >> .env
+          echo "REDIS_URL=redis://localhost:6379" >> .env
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY_TEST }}" >> .env
+
+      - name: Start API server
+        run: |
+          uvicorn src.api.main:app --host 0.0.0.0 --port 8000 &
+          sleep 15
+
+      - name: Run performance baseline test
+        run: |
+          cd tests/load
+          locust -f test_load_1000_users.py --headless \
+            --users 50 --spawn-rate 5 --run-time 120s \
+            --host http://localhost:8000 \
+            --html daily-performance-report.html \
+            --csv daily-performance
+
+      - name: Analyze performance metrics
+        run: |
+          cd tests/load
+          python -c "
+          import csv
+          import sys
+          import json
+          from datetime import datetime
+          
+          # Read current performance metrics
+          metrics = {}
+          with open('daily-performance_stats.csv', 'r') as f:
+              reader = csv.DictReader(f)
+              for row in reader:
+                  if row['Name'] == 'Aggregated':
+                      metrics = {
+                          'avg_response_time': float(row['Average Response Time']),
+                          'failure_rate': float(row['Failure Count']) / float(row['Request Count']) * 100,
+                          'requests_per_second': float(row['Requests/s']),
+                          'timestamp': datetime.now().isoformat()
+                      }
+                      break
+          
+          # Load historical data
+          try:
+              with open('performance-history.json', 'r') as f:
+                  history = json.load(f)
+          except FileNotFoundError:
+              history = []
+          
+          # Add current metrics to history
+          history.append(metrics)
+          
+          # Keep only last 30 days
+          history = history[-30:]
+          
+          # Save updated history
+          with open('performance-history.json', 'w') as f:
+              json.dump(history, f, indent=2)
+          
+          # Check for performance regression
+          if len(history) >= 7:  # Need at least a week of data
+              recent_avg = sum(m['avg_response_time'] for m in history[-7:]) / 7
+              baseline_avg = sum(m['avg_response_time'] for m in history[-14:-7]) / 7
+              
+              regression_threshold = 1.5  # 50% increase
+              if recent_avg > baseline_avg * regression_threshold:
+                  print(f'❌ Performance regression detected: {recent_avg:.2f}ms vs {baseline_avg:.2f}ms')
+                  sys.exit(1)
+          
+          print(f'✅ Performance metrics:')
+          print(f'  Average Response Time: {metrics[\"avg_response_time\"]:.2f}ms')
+          print(f'  Failure Rate: {metrics[\"failure_rate\"]:.2f}%')
+          print(f'  Requests/s: {metrics[\"requests_per_second\"]:.2f}')
+          "
+
+      - name: Memory usage analysis
+        run: |
+          python -c "
+          import psutil
+          import sys
+          
+          # Get memory usage
+          memory = psutil.virtual_memory()
+          memory_percent = memory.percent
+          
+          print(f'Memory usage: {memory_percent:.1f}%')
+          
+          if memory_percent > 90:
+              print('❌ High memory usage detected')
+              sys.exit(1)
+          elif memory_percent > 80:
+              print('⚠️ Elevated memory usage')
+          else:
+              print('✅ Memory usage normal')
+          "
+
+      - name: Upload performance reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: daily-performance-reports
+          path: |
+            tests/load/daily-performance-report.html
+            tests/load/daily-performance_*.csv
+            tests/load/performance-history.json
+
+  # Generate daily report
+  daily-report:
+    name: Generate Daily Report
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, security-posture, performance-check]
+    if: always()
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Generate comprehensive report
+        run: |
+          cat << 'EOF' > daily-report.md
+          # Daily Security & Performance Report
+          
+          **Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Repository:** ${{ github.repository }}
+          **Branch:** ${{ github.ref_name }}
+          
+          ## Summary
+          
+          ### Dependency Scan
+          - **Status:** ${{ needs.dependency-scan.result }}
+          - **Critical vulnerabilities:** $(find . -name "*daily.json" -exec grep -l "HIGH\|CRITICAL" {} \; 2>/dev/null | wc -l)
+          
+          ### Security Posture
+          - **Status:** ${{ needs.security-posture.result }}
+          - **Security issues:** $(find . -name "*daily.json" -exec grep -c "HIGH\|ERROR" {} \; 2>/dev/null | paste -sd+ | bc)
+          
+          ### Performance Check
+          - **Status:** ${{ needs.performance-check.result }}
+          - **Baseline:** $(test -f tests/load/daily-performance_stats.csv && awk -F',' 'NR==2{print $6"ms avg response"}' tests/load/daily-performance_stats.csv)
+          
+          ## Recommendations
+          
+          $(if [[ "${{ needs.dependency-scan.result }}" == "failure" ]]; then
+            echo "🔴 **Action Required**: Update vulnerable dependencies immediately"
+          fi)
+          
+          $(if [[ "${{ needs.security-posture.result }}" == "failure" ]]; then
+            echo "🔴 **Action Required**: Address high-severity security issues"
+          fi)
+          
+          $(if [[ "${{ needs.performance-check.result }}" == "failure" ]]; then
+            echo "🔴 **Action Required**: Investigate performance regression"
+          fi)
+          
+          ## Artifacts
+          - [Vulnerability Reports](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          - [Security Reports](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          - [Performance Reports](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+          ---
+          *Report generated by GitHub Actions*
+          EOF
+
+      - name: Create issue for failures
+        if: needs.dependency-scan.result == 'failure' || needs.security-posture.result == 'failure' || needs.performance-check.result == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('daily-report.md', 'utf8');
+            
+            // Check if there's already an open daily check issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'daily-checks',
+              state: 'open'
+            });
+            
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 Daily Check Failures - ${new Date().toISOString().split('T')[0]}`,
+                body: report,
+                labels: ['daily-checks', 'urgent']
+              });
+            } else {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: `## Update: ${new Date().toISOString()}\n\n${report}`
+              });
+            }
+
+      - name: Send Slack notification (if configured)
+        if: needs.dependency-scan.result == 'failure' || needs.security-posture.result == 'failure' || needs.performance-check.result == 'failure'
+        run: |
+          if [[ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]]; then
+            curl -X POST -H 'Content-type: application/json' \
+              --data '{"text":"🚨 Daily checks failed for ${{ github.repository }}. Check GitHub Actions for details."}' \
+              ${{ secrets.SLACK_WEBHOOK_URL }}
+          fi
+
+      - name: Upload daily report
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-report
+          path: daily-report.md

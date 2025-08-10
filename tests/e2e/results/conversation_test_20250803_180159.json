@@ -1,0 +1,92 @@
+{
+  "test_type": "e2e_conversation",
+  "timestamp": "20250803_180159",
+  "summary": {
+    "total_tests": 5,
+    "successful": 0,
+    "conversions": 0,
+    "conversion_rate": 0.0
+  },
+  "detailed_results": [
+    {
+      "start_time": 1754269294.691839,
+      "personality": "Enthusiastic Entrepreneur",
+      "test_id": 1,
+      "messages_sent": 0,
+      "responses_received": 0,
+      "errors": [
+        "Cannot connect to host localhost:8000 ssl:default [Multiple exceptions: [Errno 61] Connect call failed ('::1', 8000, 0, 0), [Errno 61] Connect call failed ('127.0.0.1', 8000)]"
+      ],
+      "end_time": 1754269294.6957572,
+      "duration": 0.003918170928955078,
+      "conversation_id": null,
+      "conversation_log": [],
+      "expected_outcome": "high_conversion",
+      "success": false
+    },
+    {
+      "start_time": 1754269299.696985,
+      "personality": "Skeptical Business Owner",
+      "test_id": 2,
+      "messages_sent": 0,
+      "responses_received": 0,
+      "errors": [
+        "Cannot connect to host localhost:8000 ssl:default [Multiple exceptions: [Errno 61] Connect call failed ('127.0.0.1', 8000), [Errno 61] Connect call failed ('::1', 8000, 0, 0)]"
+      ],
+      "end_time": 1754269299.698171,
+      "duration": 0.0011858940124511719,
+      "conversation_id": null,
+      "conversation_log": [],
+      "expected_outcome": "medium_conversion",
+      "success": false
+    },
+    {
+      "start_time": 1754269304.699392,
+      "personality": "Indecisive Fitness Coach",
+      "test_id": 3,
+      "messages_sent": 0,
+      "responses_received": 0,
+      "errors": [
+        "Cannot connect to host localhost:8000 ssl:default [Multiple exceptions: [Errno 61] Connect call failed ('::1', 8000, 0, 0), [Errno 61] Connect call failed ('127.0.0.1', 8000)]"
+      ],
+      "end_time": 1754269304.700703,
+      "duration": 0.0013108253479003906,
+      "conversation_id": null,
+      "conversation_log": [],
+      "expected_outcome": "low_conversion",
+      "success": false
+    },
+    {
+      "start_time": 1754269309.70189,
+      "personality": "Price-Sensitive Trainer",
+      "test_id": 4,
+      "messages_sent": 0,
+      "responses_received": 0,
+      "errors": [
+        "Cannot connect to host localhost:8000 ssl:default [Multiple exceptions: [Errno 61] Connect call failed ('127.0.0.1', 8000), [Errno 61] Connect call failed ('::1', 8000, 0, 0)]"
+      ],
+      "end_time": 1754269309.702496,
+      "duration": 0.0006060600280761719,
+      "conversation_id": null,
+      "conversation_log": [],
+      "expected_outcome": "objection_handling",
+      "success": false
+    },
+    {
+      "start_time": 1754269314.703671,
+      "personality": "Technical Nutritionist",
+      "test_id": 5,
+      "messages_sent": 0,
+      "responses_received": 0,
+      "errors": [
+        "Cannot connect to host localhost:8000 ssl:default [Multiple exceptions: [Errno 61] Connect call failed ('::1', 8000, 0, 0), [Errno 61] Connect call failed ('127.0.0.1', 8000)]"
+      ],
+      "end_time": 1754269314.7048361,
+      "duration": 0.001165151596069336,
+      "conversation_id": null,
+      "conversation_log": [],
+      "expected_outcome": "technical_conversation",
+      "success": false
+    }
+  ]
+}

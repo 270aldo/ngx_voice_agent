@@ -1,0 +1,67 @@
+# Multi-stage Dockerfile optimizado para producción
+# Stage 1: Builder - Compilar dependencias
+FROM python:3.10-slim as builder
+
+WORKDIR /build
+
+# Instalar dependencias de compilación
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar requirements y compilar wheels
+COPY requirements.txt .
+RUN pip install --upgrade pip setuptools wheel && \
+    pip wheel --no-cache-dir --no-deps --wheel-dir /build/wheels -r requirements.txt
+
+# Stage 2: Runtime - Imagen final optimizada
+FROM python:3.10-slim
+
+# Variables de entorno para Python
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
+    PORT=8000
+
+# Crear usuario no-root
+RUN groupadd -r ngxapp && useradd -r -g ngxapp ngxapp
+
+WORKDIR /app
+
+# Instalar dependencias runtime (audio processing)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    libavcodec-extra \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar wheels pre-compilados e instalar
+COPY --from=builder /build/wheels /wheels
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt && \
+    rm -rf /wheels
+
+# Copiar código de aplicación
+COPY --chown=ngxapp:ngxapp src/ ./src/
+COPY --chown=ngxapp:ngxapp configs/ ./configs/
+COPY --chown=ngxapp:ngxapp bin/start.sh ./bin/
+
+# Crear directorios necesarios
+RUN mkdir -p /app/logs /app/tmp && \
+    chown -R ngxapp:ngxapp /app/logs /app/tmp
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health || exit 1
+
+# Cambiar a usuario no-root
+USER ngxapp
+
+# Puerto de exposición
+EXPOSE ${PORT}
+
+# Comando de inicio con workers optimizados para producción
+CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT} --workers 4 --loop uvloop --access-log --log-config configs/logging.json"]

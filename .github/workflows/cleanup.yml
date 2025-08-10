@@ -1,0 +1,219 @@
+name: Repository Cleanup
+
+on:
+  schedule:
+    # Run weekly on Sundays at 3:00 AM UTC
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      cleanup_type:
+        description: 'Type of cleanup to perform'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - artifacts
+          - images
+          - cache
+
+jobs:
+  cleanup-artifacts:
+    name: Cleanup Old Artifacts
+    runs-on: ubuntu-latest
+    if: github.event.inputs.cleanup_type == 'all' || github.event.inputs.cleanup_type == 'artifacts' || github.event_name == 'schedule'
+    
+    steps:
+      - name: Delete artifacts older than 30 days
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - 30);
+            
+            const artifacts = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            
+            let deletedCount = 0;
+            
+            for (const artifact of artifacts.data.artifacts) {
+              const createdAt = new Date(artifact.created_at);
+              
+              if (createdAt < cutoffDate) {
+                try {
+                  await github.rest.actions.deleteArtifact({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    artifact_id: artifact.id
+                  });
+                  deletedCount++;
+                  console.log(`Deleted artifact: ${artifact.name} (${artifact.created_at})`);
+                } catch (error) {
+                  console.error(`Failed to delete artifact ${artifact.name}: ${error.message}`);
+                }
+              }
+            }
+            
+            console.log(`Cleanup completed. Deleted ${deletedCount} artifacts.`);
+
+  cleanup-docker-images:
+    name: Cleanup Old Docker Images
+    runs-on: ubuntu-latest
+    if: github.event.inputs.cleanup_type == 'all' || github.event.inputs.cleanup_type == 'images' || github.event_name == 'schedule'
+    
+    steps:
+      - name: Delete untagged container images
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const package_name = context.repo.repo.toLowerCase();
+            
+            try {
+              const versions = await github.rest.packages.getAllPackageVersionsForPackageOwnedByOrg({
+                package_type: 'container',
+                package_name: package_name,
+                org: context.repo.owner,
+                per_page: 100
+              });
+              
+              let deletedCount = 0;
+              const cutoffDate = new Date();
+              cutoffDate.setDate(cutoffDate.getDate() - 14); // Keep images for 14 days
+              
+              for (const version of versions.data) {
+                const createdAt = new Date(version.created_at);
+                const isUntagged = version.metadata.container.tags.length === 0;
+                const isOld = createdAt < cutoffDate;
+                
+                if (isUntagged || (isOld && !version.metadata.container.tags.includes('latest'))) {
+                  try {
+                    await github.rest.packages.deletePackageVersionForOrg({
+                      package_type: 'container',
+                      package_name: package_name,
+                      org: context.repo.owner,
+                      package_version_id: version.id
+                    });
+                    deletedCount++;
+                    console.log(`Deleted image version: ${version.name} (${version.created_at})`);
+                  } catch (error) {
+                    console.error(`Failed to delete image version ${version.name}: ${error.message}`);
+                  }
+                }
+              }
+              
+              console.log(`Image cleanup completed. Deleted ${deletedCount} versions.`);
+            } catch (error) {
+              console.log(`Image cleanup skipped: ${error.message}`);
+            }
+
+  cleanup-cache:
+    name: Cleanup Build Cache
+    runs-on: ubuntu-latest
+    if: github.event.inputs.cleanup_type == 'all' || github.event.inputs.cleanup_type == 'cache' || github.event_name == 'schedule'
+    
+    steps:
+      - name: Cleanup GitHub Actions cache
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const caches = await github.rest.actions.getActionsCacheList({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            
+            let deletedCount = 0;
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - 7); // Keep cache for 7 days
+            
+            for (const cache of caches.data.actions_caches) {
+              const createdAt = new Date(cache.created_at);
+              const lastAccessed = new Date(cache.last_accessed_at);
+              
+              // Delete if old and not recently accessed
+              if (createdAt < cutoffDate && lastAccessed < cutoffDate) {
+                try {
+                  await github.rest.actions.deleteActionsCacheById({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    cache_id: cache.id
+                  });
+                  deletedCount++;
+                  console.log(`Deleted cache: ${cache.key} (${cache.created_at})`);
+                } catch (error) {
+                  console.error(`Failed to delete cache ${cache.key}: ${error.message}`);
+                }
+              }
+            }
+            
+            console.log(`Cache cleanup completed. Deleted ${deletedCount} cache entries.`);
+
+  cleanup-summary:
+    name: Cleanup Summary
+    runs-on: ubuntu-latest
+    needs: [cleanup-artifacts, cleanup-docker-images, cleanup-cache]
+    if: always()
+    
+    steps:
+      - name: Generate cleanup report
+        run: |
+          cat << 'EOF' > cleanup-report.md
+          # Repository Cleanup Report
+          
+          **Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Repository:** ${{ github.repository }}
+          **Triggered by:** ${{ github.event_name == 'schedule' && 'Scheduled' || github.actor }}
+          
+          ## Cleanup Results
+          
+          ### Artifacts Cleanup
+          - **Status:** ${{ needs.cleanup-artifacts.result }}
+          - **Action:** Removed artifacts older than 30 days
+          
+          ### Docker Images Cleanup
+          - **Status:** ${{ needs.cleanup-docker-images.result }}
+          - **Action:** Removed untagged and old images (14+ days)
+          
+          ### Build Cache Cleanup
+          - **Status:** ${{ needs.cleanup-cache.result }}
+          - **Action:** Removed unused cache entries (7+ days)
+          
+          ## Storage Optimization
+          
+          This cleanup helps maintain repository storage efficiency by:
+          - Removing outdated build artifacts
+          - Cleaning up unused Docker images
+          - Optimizing GitHub Actions cache usage
+          
+          ## Next Cleanup
+          
+          ${{ github.event_name == 'schedule' && 'Next scheduled cleanup: Next Sunday at 3:00 AM UTC' || 'Next scheduled cleanup: Sundays at 3:00 AM UTC' }}
+          
+          ---
+          *Report generated by GitHub Actions*
+          EOF
+
+      - name: Upload cleanup report
+        uses: actions/upload-artifact@v4
+        with:
+          name: cleanup-report
+          path: cleanup-report.md
+
+      - name: Create issue for cleanup failures
+        if: needs.cleanup-artifacts.result == 'failure' || needs.cleanup-docker-images.result == 'failure' || needs.cleanup-cache.result == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('cleanup-report.md', 'utf8');
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🧹 Repository Cleanup Failed - ${new Date().toISOString().split('T')[0]}`,
+              body: report,
+              labels: ['maintenance', 'infrastructure']
+            });
