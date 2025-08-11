@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  ngx-agent:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.production
+    image: ngx-voice-sales-agent:latest
+    container_name: ngx-agent-prod
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      - PORT=${APP_PORT:-8000}
+      - ENV=production
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    env_file:
+      - ../.env.production
+    volumes:
+      - ngx-logs:/app/logs
+      - ngx-tmp:/app/tmp
+    networks:
+      - ngx-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Redis para caching y rate limiting
+  redis:
+    image: redis:7-alpine
+    container_name: ngx-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - ngx-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # Nginx como reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: ngx-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx-cache:/var/cache/nginx
+    depends_on:
+      - ngx-agent
+    networks:
+      - ngx-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+volumes:
+  ngx-logs:
+    driver: local
+  ngx-tmp:
+    driver: local
+  redis-data:
+    driver: local
+  nginx-cache:
+    driver: local
+
+networks:
+  ngx-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

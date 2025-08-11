@@ -1,0 +1,71 @@
+{
+  "test_suite": "Archetype Detection",
+  "timestamp": "2025-07-25T20:05:07.160105",
+  "profiles_tested": 5,
+  "results": [
+    {
+      "profile_name": "Roberto Chen",
+      "occupation": "CEO",
+      "expected_archetype": "optimizer",
+      "expected_tier": "PRIME Premium",
+      "detected_archetype": null,
+      "detected_tier": null,
+      "confidence_scores": {},
+      "detection_accuracy": 0,
+      "response_quality": []
+    },
+    {
+      "profile_name": "Dr. Patricia Mendez",
+      "occupation": "Médico Jefe",
+      "expected_archetype": "architect",
+      "expected_tier": "LONGEVITY Premium",
+      "detected_archetype": null,
+      "detected_tier": null,
+      "confidence_scores": {},
+      "detection_accuracy": 0,
+      "response_quality": []
+    },
+    {
+      "profile_name": "Alex Rivera",
+      "occupation": "Startup Founder",
+      "expected_archetype": "explorer",
+      "expected_tier": "PRO",
+      "detected_archetype": null,
+      "detected_tier": null,
+      "confidence_scores": {},
+      "detection_accuracy": 0,
+      "response_quality": []
+    },
+    {
+      "profile_name": "Carlos Jimenez",
+      "occupation": "Manager de Operaciones",
+      "expected_archetype": "pragmatist",
+      "expected_tier": "ESSENTIAL",
+      "detected_archetype": null,
+      "detected_tier": null,
+      "confidence_scores": {},
+      "detection_accuracy": 0,
+      "response_quality": []
+    },
+    {
+      "profile_name": "Isabella Dominguez",
+      "occupation": "Socia Senior - Abogada",
+      "expected_archetype": "maximizer",
+      "expected_tier": "ELITE",
+      "detected_archetype": null,
+      "detected_tier": null,
+      "confidence_scores": {},
+      "detection_accuracy": 0,
+      "response_quality": []
+    }
+  ],
+  "overall_accuracy": 0.0,
+  "perfect_matches": 0,
+  "accuracy_by_archetype": {
+    "optimizer": 0.0,
+    "architect": 0.0,
+    "explorer": 0.0,
+    "pragmatist": 0.0,
+    "maximizer": 0.0
+  }
+}

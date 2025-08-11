@@ -1,0 +1,118 @@
+groups:
+  - name: ngx_voice_agent_alerts
+    interval: 30s
+    rules:
+      # API Health Alerts
+      - alert: NGXAPIDown
+        expr: up{job="ngx-voice-agent"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "NGX Voice Sales Agent API is down"
+          description: "The NGX API has been down for more than 2 minutes."
+
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="ngx-voice-agent"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High API response time"
+          description: "95th percentile response time is above 1 second for 5 minutes."
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{job="ngx-voice-agent",status=~"5.."}[5m]) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 1% for the last 5 minutes."
+
+      # Resource Alerts
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total{job="ngx-voice-agent"}[5m]) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 80% for more than 10 minutes."
+
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes{job="ngx-voice-agent"} / 1024 / 1024 / 1024 > 4
+        for: 10m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 4GB for more than 10 minutes."
+
+      # Redis Alerts
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache service is not responding."
+
+      - alert: RedisCacheHitRateLow
+        expr: redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total) < 0.8
+        for: 15m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Low Redis cache hit rate"
+          description: "Cache hit rate is below 80% for 15 minutes."
+
+      # ML Model Alerts
+      - alert: MLPredictionFailureHigh
+        expr: rate(ml_prediction_failures_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: ml
+        annotations:
+          summary: "High ML prediction failure rate"
+          description: "ML prediction failure rate is above 5%."
+
+      - alert: MLModelResponseTimeSlow
+        expr: histogram_quantile(0.95, rate(ml_prediction_duration_seconds_bucket[5m])) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: ml
+        annotations:
+          summary: "Slow ML model response time"
+          description: "95th percentile ML prediction time is above 500ms."
+
+      # Business Metrics Alerts
+      - alert: LowConversionRate
+        expr: rate(conversation_conversions_total[1h]) / rate(conversation_started_total[1h]) < 0.02
+        for: 2h
+        labels:
+          severity: info
+          component: business
+        annotations:
+          summary: "Low conversion rate"
+          description: "Conversion rate has been below 2% for 2 hours."
+
+      - alert: HighConversationDropRate
+        expr: rate(conversation_dropped_total[30m]) / rate(conversation_started_total[30m]) > 0.3
+        for: 1h
+        labels:
+          severity: warning
+          component: business
+        annotations:
+          summary: "High conversation drop rate"
+          description: "More than 30% of conversations are being dropped."

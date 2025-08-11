@@ -1,0 +1,44 @@
+{
+  "timestamp": "2025-07-26T00:13:23.833116",
+  "api_url": "http://localhost:8000",
+  "validations": {
+    "basic_conversation": {
+      "conversation_works": false,
+      "error": "[Errno 54] Connection reset by peer"
+    },
+    "hie_mention": {
+      "hie_explained": false,
+      "agents_mentioned": 0,
+      "agent_list": [],
+      "impossible_to_clone": false
+    },
+    "tier_detection": {
+      "tier_detection_works": false,
+      "tier_detected": false,
+      "archetype_detected": false,
+      "appropriate_for_ceo": false
+    },
+    "empathy": {
+      "empathy_shown": false,
+      "empathy_indicators": 0,
+      "empathy_words_found": [],
+      "validates_feelings": false
+    },
+    "roi_personalization": {
+      "roi_mentioned": false,
+      "personalized_calculation": false,
+      "profession_specific": false,
+      "roi_indicators": 0
+    }
+  },
+  "capabilities_working": {
+    "basic_conversation": false,
+    "hie_integration": false,
+    "tier_detection": false,
+    "empathy": false,
+    "roi_personalization": false
+  },
+  "total_capabilities": 5,
+  "working_capabilities": 0,
+  "success_rate": 0.0
+}

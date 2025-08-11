@@ -1,0 +1,1072 @@
+openapi: 3.0.3
+info:
+  title: NGX Voice Sales Agent API
+  description: |
+    API para el agente de ventas conversacional NGX. Este sistema utiliza IA avanzada
+    para automatizar y optimizar el proceso de ventas de servicios NGX, incluyendo
+    NGX AGENTS ACCESS y programas de Hybrid Coaching.
+    
+    ## Características principales:
+    - Conversaciones de voz en tiempo real con IA
+    - Detección inteligente de objeciones y necesidades
+    - Optimización de flujo conversacional con ML
+    - Análisis predictivo de conversión
+    - Sistema de caché multi-capa para <20ms de latencia
+    
+    ## Autenticación:
+    Todos los endpoints requieren autenticación JWT Bearer token, excepto `/auth/login` y `/auth/register`.
+    
+  version: 1.0.0
+  contact:
+    name: NGX Development Team
+    email: dev@ngx.com
+  license:
+    name: Proprietary
+    
+servers:
+  - url: https://api.ngx-sales.com/v1
+    description: Production server
+  - url: https://staging-api.ngx-sales.com/v1
+    description: Staging server
+  - url: http://localhost:8000/v1
+    description: Development server
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: auth
+    description: Autenticación y gestión de usuarios
+  - name: conversation
+    description: Gestión de conversaciones de venta
+  - name: analytics
+    description: Análisis y métricas de conversaciones
+  - name: predictive
+    description: Servicios predictivos de ML
+  - name: qualification
+    description: Calificación de leads
+  - name: cache
+    description: Gestión del sistema de caché
+  - name: security
+    description: Operaciones de seguridad
+  - name: metrics
+    description: Métricas del sistema
+
+paths:
+  # Auth endpoints
+  /auth/login:
+    post:
+      tags:
+        - auth
+      summary: Iniciar sesión
+      description: Autentica un usuario y retorna tokens JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: admin@ngx.com
+                password:
+                  type: string
+                  format: password
+                  example: SecurePassword123!
+      responses:
+        200:
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        429:
+          $ref: '#/components/responses/RateLimitError'
+
+  /auth/register:
+    post:
+      tags:
+        - auth
+      summary: Registrar nuevo usuario
+      description: Crea una nueva cuenta de usuario
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistration'
+      responses:
+        201:
+          description: Usuario creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        400:
+          $ref: '#/components/responses/BadRequestError'
+        409:
+          description: El usuario ya existe
+
+  /auth/refresh:
+    post:
+      tags:
+        - auth
+      summary: Refrescar token
+      description: Obtiene un nuevo access token usando el refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      responses:
+        200:
+          description: Token refrescado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/me:
+    get:
+      tags:
+        - auth
+      summary: Obtener perfil del usuario actual
+      description: Retorna la información del usuario autenticado
+      responses:
+        200:
+          description: Perfil del usuario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+
+  # Conversation endpoints
+  /conversation/start:
+    post:
+      tags:
+        - conversation
+      summary: Iniciar nueva conversación
+      description: Inicia una nueva conversación de ventas con un cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationStartRequest'
+      responses:
+        200:
+          description: Conversación iniciada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+        400:
+          $ref: '#/components/responses/BadRequestError'
+
+  /conversation/{conversation_id}/message:
+    post:
+      tags:
+        - conversation
+      summary: Enviar mensaje en conversación
+      description: Procesa un mensaje del cliente y genera respuesta del agente
+      parameters:
+        - $ref: '#/components/parameters/ConversationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageRequest'
+      responses:
+        200:
+          description: Respuesta del agente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+        404:
+          $ref: '#/components/responses/NotFoundError'
+
+  /conversation/{conversation_id}:
+    get:
+      tags:
+        - conversation
+      summary: Obtener estado de conversación
+      description: Retorna el estado actual y historial de una conversación
+      parameters:
+        - $ref: '#/components/parameters/ConversationId'
+      responses:
+        200:
+          description: Estado de la conversación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationState'
+        404:
+          $ref: '#/components/responses/NotFoundError'
+
+  /conversation/{conversation_id}/end:
+    post:
+      tags:
+        - conversation
+      summary: Finalizar conversación
+      description: Termina una conversación y guarda el resultado
+      parameters:
+        - $ref: '#/components/parameters/ConversationId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                outcome:
+                  type: string
+                  enum: [converted, not_interested, follow_up_required]
+                notes:
+                  type: string
+      responses:
+        200:
+          description: Conversación finalizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+
+  # Analytics endpoints
+  /analytics/conversation/{conversation_id}:
+    get:
+      tags:
+        - analytics
+      summary: Obtener análisis de conversación
+      description: Retorna métricas y análisis detallados de una conversación
+      parameters:
+        - $ref: '#/components/parameters/ConversationId'
+      responses:
+        200:
+          description: Análisis de conversación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationAnalytics'
+        404:
+          $ref: '#/components/responses/NotFoundError'
+
+  /analytics/aggregate:
+    get:
+      tags:
+        - analytics
+      summary: Obtener métricas agregadas
+      description: Retorna métricas agregadas de múltiples conversaciones
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+            example: 2025-01-01
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+            example: 2025-01-31
+        - name: group_by
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month]
+            default: day
+      responses:
+        200:
+          description: Métricas agregadas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AggregateAnalytics'
+
+  # Predictive ML endpoints
+  /predictive/objection/predict:
+    post:
+      tags:
+        - predictive
+      summary: Predecir objeciones
+      description: Predice posibles objeciones del cliente basándose en la conversación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PredictionRequest'
+      responses:
+        200:
+          description: Predicción de objeciones
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectionPrediction'
+
+  /predictive/needs/predict:
+    post:
+      tags:
+        - predictive
+      summary: Predecir necesidades
+      description: Identifica las necesidades del cliente basándose en la conversación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PredictionRequest'
+      responses:
+        200:
+          description: Predicción de necesidades
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NeedsPrediction'
+
+  /predictive/conversion/predict:
+    post:
+      tags:
+        - predictive
+      summary: Predecir probabilidad de conversión
+      description: Calcula la probabilidad de que el cliente convierta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PredictionRequest'
+      responses:
+        200:
+          description: Predicción de conversión
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversionPrediction'
+
+  /predictive/decision/optimize-flow:
+    post:
+      tags:
+        - predictive
+      summary: Optimizar flujo de conversación
+      description: Genera estrategia óptima para la conversación usando el Decision Engine
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OptimizationRequest'
+      responses:
+        200:
+          description: Estrategia optimizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OptimizationResult'
+
+  # Qualification endpoints
+  /qualification/score:
+    post:
+      tags:
+        - qualification
+      summary: Calcular score de calificación
+      description: Calcula el score de calificación de un lead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QualificationRequest'
+      responses:
+        200:
+          description: Score de calificación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualificationResult'
+
+  # Cache management endpoints
+  /cache/health:
+    get:
+      tags:
+        - cache
+      summary: Estado del sistema de caché
+      description: Verifica el estado y salud del sistema de caché multi-capa
+      responses:
+        200:
+          description: Estado del caché
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheHealth'
+
+  /cache/stats:
+    get:
+      tags:
+        - cache
+      summary: Estadísticas del caché
+      description: Retorna estadísticas detalladas del uso del caché
+      responses:
+        200:
+          description: Estadísticas del caché
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheStats'
+
+  # Metrics endpoints
+  /metrics:
+    get:
+      tags:
+        - metrics
+      summary: Métricas del sistema
+      description: Retorna métricas generales del sistema en formato Prometheus
+      security: []
+      responses:
+        200:
+          description: Métricas en formato Prometheus
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /metrics/ml:
+    get:
+      tags:
+        - metrics
+      summary: Métricas de ML
+      description: Retorna métricas específicas de los modelos de Machine Learning
+      responses:
+        200:
+          description: Métricas de ML
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MLMetrics'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    ConversationId:
+      name: conversation_id
+      in: path
+      required: true
+      description: ID único de la conversación
+      schema:
+        type: string
+        format: uuid
+        example: 123e4567-e89b-12d3-a456-426614174000
+
+  responses:
+    UnauthorizedError:
+      description: Token de autenticación faltante o inválido
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    NotFoundError:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    BadRequestError:
+      description: Solicitud inválida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    RateLimitError:
+      description: Límite de tasa excedido
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    # Auth schemas
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refresh_token:
+          type: string
+          description: JWT refresh token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        token_type:
+          type: string
+          default: bearer
+        expires_in:
+          type: integer
+          description: Segundos hasta expiración
+          example: 3600
+
+    UserRegistration:
+      type: object
+      required:
+        - email
+        - password
+        - full_name
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: SecurePass123!
+        full_name:
+          type: string
+          example: Juan Pérez
+        company:
+          type: string
+          example: NGX Fitness Studio
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+        company:
+          type: string
+        role:
+          type: string
+          enum: [admin, agent, viewer]
+        created_at:
+          type: string
+          format: date-time
+        last_login:
+          type: string
+          format: date-time
+
+    # Conversation schemas
+    ConversationStartRequest:
+      type: object
+      required:
+        - customer_info
+      properties:
+        customer_info:
+          $ref: '#/components/schemas/CustomerInfo'
+        initial_message:
+          type: string
+          example: Hola, estoy interesado en mejorar mi gimnasio
+        channel:
+          type: string
+          enum: [voice, chat]
+          default: voice
+        metadata:
+          type: object
+          additionalProperties: true
+
+    CustomerInfo:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: Carlos Mendoza
+        email:
+          type: string
+          format: email
+          example: carlos@fitnessstudio.com
+        phone:
+          type: string
+          example: +1234567890
+        business_type:
+          type: string
+          enum: [gym, studio, trainer, wellness_center]
+          example: gym
+        business_size:
+          type: string
+          enum: [small, medium, large, enterprise]
+          example: medium
+        location:
+          type: string
+          example: Ciudad de México
+
+    MessageRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: ¿Cuánto cuesta el servicio?
+        audio_url:
+          type: string
+          format: uri
+          description: URL del audio si es conversación de voz
+
+    ConversationResponse:
+      type: object
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+          example: NGX ofrece varios planes. Para un gimnasio mediano como el tuyo, recomendaría el plan PRO a $349/mes
+        audio_url:
+          type: string
+          format: uri
+          description: URL del audio de respuesta
+        metadata:
+          type: object
+          properties:
+            sentiment:
+              type: string
+              enum: [positive, neutral, negative]
+            detected_intent:
+              type: string
+              example: pricing_inquiry
+            confidence:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+            next_actions:
+              type: array
+              items:
+                type: string
+
+    ConversationState:
+      type: object
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [active, paused, ended]
+        started_at:
+          type: string
+          format: date-time
+        last_activity:
+          type: string
+          format: date-time
+        customer_info:
+          $ref: '#/components/schemas/CustomerInfo'
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+        current_phase:
+          type: string
+          enum: [discovery, needs_analysis, solution_presentation, objection_handling, closing]
+        conversion_probability:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [customer, agent]
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+
+    # Analytics schemas
+    ConversationAnalytics:
+      type: object
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+        duration_seconds:
+          type: integer
+        message_count:
+          type: integer
+        customer_engagement_score:
+          type: number
+          format: float
+        objections_handled:
+          type: integer
+        needs_identified:
+          type: array
+          items:
+            type: string
+        recommended_tier:
+          type: string
+          enum: [essential, pro, elite, prime_premium, longevity_premium]
+        conversion_probability:
+          type: number
+          format: float
+        roi_projection:
+          type: object
+          properties:
+            percentage:
+              type: number
+              example: 350.5
+            annual_value:
+              type: number
+              example: 42000
+            payback_months:
+              type: number
+              example: 3.2
+
+    AggregateAnalytics:
+      type: object
+      properties:
+        period:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date
+            end:
+              type: string
+              format: date
+        total_conversations:
+          type: integer
+        conversions:
+          type: integer
+        conversion_rate:
+          type: number
+          format: float
+        average_conversation_duration:
+          type: number
+        top_objections:
+          type: array
+          items:
+            type: object
+            properties:
+              objection:
+                type: string
+              count:
+                type: integer
+        tier_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+
+    # Predictive ML schemas
+    PredictionRequest:
+      type: object
+      required:
+        - conversation_id
+        - messages
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+        customer_profile:
+          type: object
+          additionalProperties: true
+
+    ObjectionPrediction:
+      type: object
+      properties:
+        objections:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                example: price
+              probability:
+                type: number
+                format: float
+              suggested_response:
+                type: string
+              confidence:
+                type: number
+                format: float
+
+    NeedsPrediction:
+      type: object
+      properties:
+        needs:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+                example: retention
+              description:
+                type: string
+              priority:
+                type: string
+                enum: [high, medium, low]
+              confidence:
+                type: number
+                format: float
+
+    ConversionPrediction:
+      type: object
+      properties:
+        probability:
+          type: number
+          format: float
+          example: 0.75
+        category:
+          type: string
+          enum: [very_low, low, medium, high, very_high]
+        factors:
+          type: array
+          items:
+            type: object
+            properties:
+              factor:
+                type: string
+              impact:
+                type: string
+                enum: [positive, negative, neutral]
+              weight:
+                type: number
+                format: float
+
+    OptimizationRequest:
+      type: object
+      required:
+        - conversation_id
+        - messages
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+        current_objectives:
+          type: object
+          properties:
+            need_satisfaction:
+              type: number
+              format: float
+            objection_handling:
+              type: number
+              format: float
+            conversion_progress:
+              type: number
+              format: float
+
+    OptimizationResult:
+      type: object
+      properties:
+        next_actions:
+          type: array
+          items:
+            type: object
+            properties:
+              action:
+                type: string
+              description:
+                type: string
+              priority:
+                type: string
+                enum: [high, medium, low]
+              confidence:
+                type: number
+                format: float
+        confidence:
+          type: number
+          format: float
+        decision_tree:
+          type: object
+          description: Árbol de decisión simplificado
+
+    # Qualification schemas
+    QualificationRequest:
+      type: object
+      required:
+        - customer_info
+      properties:
+        customer_info:
+          $ref: '#/components/schemas/CustomerInfo'
+        conversation_summary:
+          type: string
+        detected_needs:
+          type: array
+          items:
+            type: string
+
+    QualificationResult:
+      type: object
+      properties:
+        lead_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        qualification:
+          type: string
+          enum: [hot, warm, cold]
+        recommended_actions:
+          type: array
+          items:
+            type: string
+        tier_recommendation:
+          type: string
+          enum: [essential, pro, elite, prime_premium, longevity_premium]
+
+    # Cache schemas
+    CacheHealth:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        l1_cache:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            size:
+              type: integer
+            hit_rate:
+              type: number
+              format: float
+        l2_cache:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            connected:
+              type: boolean
+            latency_ms:
+              type: number
+
+    CacheStats:
+      type: object
+      properties:
+        total_requests:
+          type: integer
+        cache_hits:
+          type: integer
+        cache_misses:
+          type: integer
+        hit_rate:
+          type: number
+          format: float
+        l1_stats:
+          type: object
+          additionalProperties: true
+        l2_stats:
+          type: object
+          additionalProperties: true
+
+    # ML Metrics schemas
+    MLMetrics:
+      type: object
+      properties:
+        models:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              version:
+                type: string
+              accuracy:
+                type: number
+                format: float
+              last_trained:
+                type: string
+                format: date-time
+              predictions_24h:
+                type: integer
+        performance:
+          type: object
+          properties:
+            avg_latency_ms:
+              type: number
+            p95_latency_ms:
+              type: number
+            p99_latency_ms:
+              type: number
+
+    # Error schema
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: UNAUTHORIZED
+            message:
+              type: string
+              example: Invalid authentication credentials
+            details:
+              type: object
+              additionalProperties: true
+        request_id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time

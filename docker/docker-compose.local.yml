@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  ngx-agent:
+    image: ngx-voice-sales-agent:latest
+    container_name: ngx-agent-local
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      - PORT=${APP_PORT:-8000}
+      - ENV=production
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    env_file:
+      - ../.env.local
+    volumes:
+      - ngx-logs:/app/logs
+      - ngx-tmp:/app/tmp
+    networks:
+      - ngx-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis para caching y rate limiting
+  redis:
+    image: redis:7-alpine
+    container_name: ngx-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - ngx-network
+
+  # Nginx como reverse proxy (sin SSL para desarrollo local)
+  nginx:
+    image: nginx:alpine
+    container_name: ngx-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
+      - nginx-cache:/var/cache/nginx
+    depends_on:
+      - ngx-agent
+    networks:
+      - ngx-network
+
+volumes:
+  ngx-logs:
+    driver: local
+  ngx-tmp:
+    driver: local
+  redis-data:
+    driver: local
+  nginx-cache:
+    driver: local
+
+networks:
+  ngx-network:
+    driver: bridge

@@ -1,0 +1,68 @@
+# Core API Framework
+fastapi==0.115.6
+starlette==0.41.3
+uvicorn==0.32.1
+uvloop==0.21.0
+pydantic==2.10.5
+pydantic-settings==2.5.2
+email-validator==2.1.0
+typing-extensions==4.12.2
+annotated-types==0.6.0
+
+# HTTP Client and Async Support
+httpx==0.28.1
+anyio==4.9.0
+
+# AI and Language Processing
+openai==1.81.0
+openai-agents==0.0.16
+elevenlabs==1.59.0
+# Note: langchain is in requirements_simple.txt but not pinned - consider if needed
+
+# Audio Processing
+librosa==0.10.1
+soundfile==0.13.1
+
+# Database
+supabase==2.13.0
+asyncpg==0.30.0
+sqlalchemy==2.0.25
+
+# Utilities
+python-dotenv==1.0.1
+pyjwt==2.8.0
+tenacity==9.0.0
+
+# Machine Learning & Data Science
+scikit-learn==1.5.2
+pandas==2.2.3
+numpy==1.26.4
+scipy==1.14.1
+
+# ML Optimization & Experimentation
+optuna==4.1.0
+bayesian-optimization==2.0.0
+statsmodels==0.14.4
+
+# ML Model Management & Tracking
+mlflow==2.19.0
+
+# Additional ML utilities
+joblib==1.4.2
+psutil==6.1.0
+
+# Security and Secrets Management
+cryptography==41.0.7
+boto3==1.34.14  # For AWS Secrets Manager
+bleach==6.2.0  # For HTML sanitization in XSS protection
+
+# Caching
+redis==5.0.1  # Redis client for caching
+hiredis==2.3.2  # C parser for improved Redis performance
+
+# Resilience Patterns
+pybreaker==1.2.0  # Circuit breaker implementation
+# tenacity already included above
+
+# Monitoring
+prometheus-client==0.19.0  # Prometheus metrics

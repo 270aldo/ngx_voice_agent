@@ -1,0 +1,41 @@
+# Use Python 3.10 slim image
+FROM python:3.10-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    libffi-dev \
+    libssl-dev \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create application directory
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/tmp /app/.cache && \
+    chmod 755 /app/logs /app/tmp /app/.cache
+
+# Expose the port
+EXPOSE 8000
+
+# Run the application
+# Use simplified API for testing
+CMD ["uvicorn", "src.api.main_simple:app", "--host", "0.0.0.0", "--port", "8000"]

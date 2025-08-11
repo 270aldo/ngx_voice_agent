@@ -1,0 +1,41 @@
+{
+  "timestamp": "2025-07-25T23:45:45.625561",
+  "api_url": "http://localhost:8000",
+  "validations": {
+    "basic_conversation": {
+      "conversation_works": true,
+      "mentions_ngx": false,
+      "mentions_prime": false,
+      "personalized": false,
+      "total_responses": 0
+    },
+    "hie_mention": {
+      "hie_explained": false,
+      "error": "Message failed"
+    },
+    "tier_detection": {
+      "tier_detection_works": false,
+      "tier_detected": false,
+      "archetype_detected": false,
+      "appropriate_for_ceo": false
+    },
+    "empathy": {
+      "empathy_shown": false,
+      "error": "Message failed"
+    },
+    "roi_personalization": {
+      "roi_mentioned": false,
+      "error": "Message failed"
+    }
+  },
+  "capabilities_working": {
+    "basic_conversation": true,
+    "hie_integration": false,
+    "tier_detection": false,
+    "empathy": false,
+    "roi_personalization": false
+  },
+  "total_capabilities": 5,
+  "working_capabilities": 1,
+  "success_rate": 20.0
+}

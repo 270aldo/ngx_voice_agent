@@ -1,0 +1,2 @@
+Stage,Users,Total Requests,Success Rate,Error Rate,Avg Response,p95 Response,p99 Response,RPS
+Stage 1: Baseline Load,200,25200,50.0,50.0,193,424,473,36422.0

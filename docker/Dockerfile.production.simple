@@ -1,0 +1,50 @@
+# Simple Production Dockerfile for NGX Voice Sales Agent
+FROM python:3.10-slim
+
+# Variables de entorno para Python
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
+    PORT=8000
+
+# Crear usuario no-root
+RUN groupadd -r ngxapp && useradd -r -g ngxapp ngxapp
+
+WORKDIR /app
+
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    ffmpeg \
+    libavcodec-extra \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar requirements e instalar dependencias Python
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copiar código de aplicación
+COPY --chown=ngxapp:ngxapp src/ ./src/
+COPY --chown=ngxapp:ngxapp configs/ ./configs/
+COPY --chown=ngxapp:ngxapp bin/start.sh ./bin/
+
+# Crear directorios necesarios
+RUN mkdir -p /app/logs /app/tmp /app/.cache && \
+    chown -R ngxapp:ngxapp /app/logs /app/tmp /app/.cache
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health || exit 1
+
+# Cambiar a usuario no-root
+USER ngxapp
+
+# Puerto de exposición
+EXPOSE ${PORT}
+
+# Comando de inicio con workers optimizados para producción
+CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT} --workers 4 --loop uvloop --access-log"]

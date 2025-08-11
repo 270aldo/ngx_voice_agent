@@ -1,0 +1,165 @@
+{
+  "final_score": 51.50000000000001,
+  "tests_passed": "3/5",
+  "test_results": [
+    {
+      "test": "ultra_empathetic_greetings",
+      "average_score": 9.333333333333334,
+      "passed": false,
+      "results": [
+        {
+          "case": "Carlos",
+          "greeting_preview": "Carlos, es un honor que compartas conmigo, Carlos. Gracias por tu confianza al compartir sobre energía. Es el primer paso valiente hacia una transform",
+          "score": 9,
+          "has_name": true,
+          "has_question": true,
+          "addresses_concern": false,
+          "length": 475,
+          "micro_compliment": false
+        },
+        {
+          "case": "María",
+          "greeting_preview": "María, es emocionante conocer a alguien con tu drive, María. Me alegra muchísimo estar aquí contigo. La decisión de invertir en uno mismo es la más in",
+          "score": 10,
+          "has_name": true,
+          "has_question": true,
+          "addresses_concern": false,
+          "length": 439,
+          "micro_compliment": true
+        },
+        {
+          "case": "Roberto",
+          "greeting_preview": "Roberto, tu mensaje sobre energía me alegra muchísimo y me dice mucho sobre lo que estás viviendo, Roberto. Es un privilegio acompañarte. No estás sol",
+          "score": 9,
+          "has_name": true,
+          "has_question": true,
+          "addresses_concern": false,
+          "length": 439,
+          "micro_compliment": false
+        }
+      ]
+    },
+    {
+      "test": "price_objection_handling",
+      "average_score": 9.333333333333334,
+      "passed": false,
+      "results": [
+        {
+          "case": "Ana",
+          "response_preview": "Comprendo completamente, Ana, y respeto profundamente tu perspectiva. Ana, tu transparencia sobre el precio me ayuda mucho. Sé que $149 no es una deci",
+          "score": 9,
+          "validates_concern": true,
+          "offers_flexibility": true,
+          "reframes_value": true,
+          "empathy_score": 10
+        },
+        {
+          "case": "Luis",
+          "response_preview": "Comprendo completamente, Luis, y respeto profundamente tu perspectiva. Luis, me encanta que hagas esa pregunta porque demuestra que piensas en término",
+          "score": 9,
+          "validates_concern": true,
+          "offers_flexibility": true,
+          "reframes_value": true,
+          "empathy_score": 10
+        },
+        {
+          "case": "Carmen",
+          "response_preview": "Comprendo completamente, Carmen, y respeto profundamente tu perspectiva. Entiendo perfectamente, Carmen. Las finanzas personales son algo muy real y r",
+          "score": 10,
+          "validates_concern": true,
+          "offers_flexibility": true,
+          "reframes_value": true,
+          "empathy_score": 10
+        }
+      ]
+    },
+    {
+      "test": "micro_signal_detection",
+      "average_accuracy": 0.9166666666666666,
+      "passed": true,
+      "results": [
+        {
+          "message_preview": "Bueno... no sé si puedo pagar tanto. Estoy muy cansado y abrumado con todo.",
+          "expected_count": 4,
+          "detected_count": 6,
+          "correct_detections": 4,
+          "accuracy": 1.0,
+          "has_combined_analysis": true,
+          "confidence_avg": 0.9416666666666665
+        },
+        {
+          "message_preview": "Me encantaría mejorar pero tengo miedo al compromiso financiero. Ya he probado o",
+          "expected_count": 4,
+          "detected_count": 8,
+          "correct_detections": 3,
+          "accuracy": 0.75,
+          "has_combined_analysis": true,
+          "confidence_avg": 0.9249999999999999
+        },
+        {
+          "message_preview": "Necesito esto urgentemente, no aguanto más el estrés, pero es mucho dinero.",
+          "expected_count": 3,
+          "detected_count": 5,
+          "correct_detections": 3,
+          "accuracy": 1.0,
+          "has_combined_analysis": false,
+          "confidence_avg": 0.95
+        }
+      ]
+    },
+    {
+      "test": "empathy_parameters",
+      "optimization_rate": 1.0,
+      "passed": true,
+      "results": [
+        {
+          "context": "greeting",
+          "temperature": 0.95,
+          "is_warm": true,
+          "allows_length": true,
+          "has_special_instructions": true,
+          "optimized": true
+        },
+        {
+          "context": "price_objection",
+          "temperature": 0.9,
+          "is_warm": true,
+          "allows_length": true,
+          "has_special_instructions": true,
+          "optimized": true
+        },
+        {
+          "context": "emotional_moment",
+          "temperature": 0.95,
+          "is_warm": true,
+          "allows_length": true,
+          "has_special_instructions": true,
+          "optimized": true
+        },
+        {
+          "context": "closing",
+          "temperature": 0.9,
+          "is_warm": true,
+          "allows_length": true,
+          "has_special_instructions": true,
+          "optimized": true
+        }
+      ]
+    },
+    {
+      "test": "emotional_enhancement",
+      "average_score": 1.0,
+      "passed": true,
+      "results": [
+        {
+          "base_length": 39,
+          "enhanced_length": 495,
+          "improvement_ratio": 12.692307692307692,
+          "overall_score": 1.0,
+          "all_metrics_high": true
+        }
+      ]
+    }
+  ],
+  "timestamp": "2025-08-02T16:05:49.708936"
+}

@@ -1,0 +1,55 @@
+{
+  "test_suite": "ROI Personalization",
+  "timestamp": "2025-07-25T20:05:20.358410",
+  "scenarios_tested": 4,
+  "results": [
+    {
+      "scenario": "CEO_productivity",
+      "profile_name": "Michael Thompson",
+      "occupation": "CEO",
+      "roi_calculations_found": {},
+      "expected_vs_actual": {},
+      "validation_scores": {},
+      "response_quality": [],
+      "overall_accuracy": 0
+    },
+    {
+      "scenario": "consultant_billable_hours",
+      "profile_name": "Sarah Chen",
+      "occupation": "Senior Consultant",
+      "roi_calculations_found": {},
+      "expected_vs_actual": {},
+      "validation_scores": {},
+      "response_quality": [],
+      "overall_accuracy": 0
+    },
+    {
+      "scenario": "entrepreneur_growth_potential",
+      "profile_name": "David Martinez",
+      "occupation": "Startup Founder",
+      "roi_calculations_found": {},
+      "expected_vs_actual": {},
+      "validation_scores": {},
+      "response_quality": [],
+      "overall_accuracy": 0
+    },
+    {
+      "scenario": "healthcare_longevity_focus",
+      "profile_name": "Dr. Jennifer Williams",
+      "occupation": "Médico Especialista",
+      "roi_calculations_found": {},
+      "expected_vs_actual": {},
+      "validation_scores": {},
+      "response_quality": [],
+      "overall_accuracy": 0
+    }
+  ],
+  "overall_accuracy": 0.0,
+  "high_accuracy_count": 0,
+  "accuracy_by_occupation": {
+    "CEO": 0.0,
+    "Senior Consultant": 0.0,
+    "Startup Founder": 0.0,
+    "Médico Especialista": 0.0
+  }
+}

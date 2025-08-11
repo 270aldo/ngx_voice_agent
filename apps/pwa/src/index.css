@@ -1,0 +1,247 @@
+/* NGX Design GROK - Global Styles */
+@import '@fontsource/josefin-sans/400.css';
+@import '@fontsource/josefin-sans/500.css';
+@import '@fontsource/josefin-sans/600.css';
+@import '@fontsource/josefin-sans/700.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* NGX Design GROK Colors */
+    --ngx-black-onyx: 0 0 0;
+    --ngx-electric-violet: 139 92 246;
+    --ngx-deep-purple: 91 33 182;
+    --ngx-white: 255 255 255;
+    --ngx-dark-gray: 51 51 51;
+    
+    /* CSS Variables for shadcn/ui compatibility */
+    --background: 0 0 0; /* Black Onyx */
+    --foreground: 255 255 255; /* White */
+    
+    --primary: 139 92 246; /* Electric Violet */
+    --primary-foreground: 255 255 255;
+    
+    --secondary: 91 33 182; /* Deep Purple */
+    --secondary-foreground: 255 255 255;
+    
+    --muted: 51 51 51; /* Dark Gray */
+    --muted-foreground: 156 163 175;
+    
+    --accent: 139 92 246; /* Electric Violet */
+    --accent-foreground: 255 255 255;
+    
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    
+    --border: 91 33 182; /* Deep Purple with opacity */
+    --input: 91 33 182;
+    --ring: 139 92 246; /* Electric Violet */
+    
+    --card: 10 10 10;
+    --card-foreground: 255 255 255;
+    
+    --radius: 0.5rem;
+  }
+  
+  * {
+    @apply border-border;
+  }
+  
+  html {
+    @apply scroll-smooth;
+  }
+  
+  body {
+    @apply bg-black text-white;
+    font-family: 'Inter', sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  /* Typography */
+  .font-heading {
+    font-family: 'Josefin Sans', sans-serif;
+    @apply font-semibold tracking-tight;
+  }
+  
+  .font-body {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  /* NGX Glassmorphism Effect */
+  .glass-effect {
+    @apply backdrop-blur-xl bg-black/50 border border-deep-purple/20;
+  }
+  
+  .glass-card {
+    @apply glass-effect rounded-lg p-6 transition-all duration-300;
+    @apply hover:border-electric-violet/30 hover:shadow-lg hover:shadow-electric-violet/10;
+  }
+  
+  /* NGX Buttons */
+  .btn-ngx {
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2.5;
+    @apply font-medium transition-all duration-200;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-electric-violet;
+    @apply disabled:opacity-50 disabled:pointer-events-none;
+  }
+  
+  .btn-primary {
+    @apply btn-ngx bg-electric-violet text-white;
+    @apply hover:bg-electric-violet/90 hover:shadow-lg hover:shadow-electric-violet/25;
+    @apply active:scale-[0.98];
+  }
+  
+  .btn-secondary {
+    @apply btn-ngx bg-deep-purple text-white;
+    @apply hover:bg-deep-purple/90 hover:shadow-lg hover:shadow-deep-purple/25;
+  }
+  
+  .btn-ghost {
+    @apply btn-ngx text-white hover:bg-white/10;
+    @apply border border-electric-violet/30 hover:border-electric-violet/50;
+  }
+  
+  /* NGX Cards */
+  .card-ngx {
+    @apply glass-card;
+  }
+  
+  /* NGX Inputs */
+  .input-ngx {
+    @apply flex h-11 w-full rounded-lg bg-black/50 px-3 py-2;
+    @apply text-sm text-white placeholder:text-gray-400;
+    @apply border border-deep-purple/30 transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-electric-violet/50 focus:border-electric-violet;
+    @apply disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  
+  /* NGX Labels */
+  .label-ngx {
+    @apply text-sm font-medium text-white/90;
+  }
+  
+  /* Neon Glow Effects */
+  .neon-glow-violet {
+    @apply shadow-lg shadow-electric-violet/30;
+  }
+  
+  .neon-glow-purple {
+    @apply shadow-lg shadow-deep-purple/30;
+  }
+  
+  /* Text Gradients */
+  .text-gradient-ngx {
+    @apply bg-gradient-to-r from-electric-violet to-deep-purple bg-clip-text text-transparent;
+  }
+}
+
+@layer utilities {
+  /* Animations */
+  @keyframes pulse-violet {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  
+  @keyframes glow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 30px rgba(139, 92, 246, 0.8);
+    }
+  }
+  
+  .animate-pulse-violet {
+    animation: pulse-violet 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite;
+  }
+}
+
+/* Custom NGX Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-black;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-deep-purple/50 rounded-full;
+  @apply hover:bg-deep-purple/70;
+}
+
+::-webkit-scrollbar-thumb:active {
+  @apply bg-electric-violet;
+}
+
+/* Selection Colors */
+::selection {
+  @apply bg-electric-violet/30 text-white;
+}
+
+/* Focus Styles */
+.focus-ngx {
+  @apply focus:outline-none focus:ring-2 focus:ring-electric-violet/50 focus:ring-offset-2 focus:ring-offset-black;
+}
+
+/* Loading Animation */
+.loading-dots-ngx {
+  @apply inline-flex gap-1;
+}
+
+.loading-dots-ngx div {
+  @apply w-2 h-2 rounded-full bg-electric-violet animate-pulse;
+}
+
+.loading-dots-ngx div:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots-ngx div:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Utility Classes */
+.text-electric-violet {
+  color: rgb(139, 92, 246);
+}
+
+.text-deep-purple {
+  color: rgb(91, 33, 182);
+}
+
+.bg-electric-violet {
+  background-color: rgb(139, 92, 246);
+}
+
+.bg-deep-purple {
+  background-color: rgb(91, 33, 182);
+}
+
+.border-electric-violet {
+  border-color: rgb(139, 92, 246);
+}
+
+.border-deep-purple {
+  border-color: rgb(91, 33, 182);
+}

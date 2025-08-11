@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: ngx-agent
+    restart: unless-stopped
+    volumes:
+      - ../:/app
+    env_file:
+      - ../.env
+    ports:
+      - "8000:8000"
+    networks:
+      - ngx-network
+      - monitoring
+    labels:
+      - "com.ngx.service=voice-agent"
+      - "com.ngx.component=api"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    container_name: ngx-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-ngx-redis-password}
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - ngx-network
+      - monitoring
+    labels:
+      - "com.ngx.service=redis"
+      - "com.ngx.component=cache"
+
+networks:
+  ngx-network:
+    driver: bridge
+  monitoring:
+    external: true
+    name: monitoring_monitoring
+
+volumes:
+  redis-data:
+    driver: local 
