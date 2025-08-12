@@ -13,6 +13,12 @@ from src.models.conversation import ConversationState, CustomerData, Message
 from src.models.platform_context import PlatformContext, PlatformInfo
 from src.core.agent_factory import agent_factory, AgentInterface
 from src.integrations.supabase.resilient_client import resilient_supabase_client as supabase_client
+from src.utils.exception_types import (
+    DatabaseError,
+    DatabaseQueryError,
+    ConversationError,
+    ConversationStateError
+)
 from src.services.ngx_cache_manager import NGXCacheManager
 from src.core.dependencies import get_ngx_cache_manager
 
@@ -141,8 +147,14 @@ class BaseConversationService:
                 logger.warning(f"No se encontró la conversación: {conversation_id}")
                 return None
                 
+        except (DatabaseError, DatabaseQueryError) as e:
+            logger.error(f"Database error recuperando estado de conversación: {e}")
+            return None
+        except (KeyError, ValueError, TypeError) as e:
+            logger.error(f"Data parsing error recuperando estado de conversación: {e}")
+            return None
         except Exception as e:
-            logger.error(f"Error recuperando estado de conversación: {e}")
+            logger.error(f"Unexpected error recuperando estado de conversación: {e}", exc_info=True)
             return None
     
     async def _save_conversation_state(self, state: ConversationState) -> bool:
@@ -220,8 +232,14 @@ class BaseConversationService:
             
             return True
             
+        except (DatabaseError, DatabaseQueryError) as e:
+            logger.error(f"Database error guardando estado de conversación: {e}")
+            return False
+        except (ValueError, TypeError) as e:
+            logger.error(f"Data validation error guardando estado de conversación: {e}")
+            return False
         except Exception as e:
-            logger.error(f"Error guardando estado de conversación: {e}")
+            logger.error(f"Unexpected error guardando estado de conversación: {e}", exc_info=True)
             return False
     
     async def _restore_agent_from_state(self, state: ConversationState) -> None:
