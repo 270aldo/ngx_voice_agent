@@ -19,12 +19,13 @@ from src.integrations.supabase.client import supabase_client
 from src.utils.structured_logging import StructuredLogger
 from src.auth.jwt_handler import JWTHandler
 from .session_manager import session_manager
+from .websocket_config import websocket_config
 
 logger = StructuredLogger.get_logger(__name__)
 
 
 class ConnectionManager:
-    """Manages WebSocket connections and message broadcasting."""
+    """Manages WebSocket connections and message broadcasting with optimized concurrency."""
     
     def __init__(self):
         # Active connections by user_id
@@ -34,14 +35,40 @@ class ConnectionManager:
         # Connection metadata
         self.connection_metadata: Dict[str, dict] = {}
         
+        # Connection limits from config
+        self.max_connections = websocket_config.MAX_TOTAL_CONNECTIONS
+        self.max_per_org = websocket_config.MAX_CONNECTIONS_PER_ORG
+        self.max_per_user = websocket_config.MAX_CONNECTIONS_PER_USER
+        
+        # Connection pool management
+        self.connection_pool_size = websocket_config.CONNECTION_POOL_SIZE
+        self.connection_semaphore = asyncio.Semaphore(self.connection_pool_size)
+        
     async def connect(
         self, 
         websocket: WebSocket, 
         user_id: str, 
         organization_id: str
     ):
-        """Accept and register a new WebSocket connection."""
-        await websocket.accept()
+        """Accept and register a new WebSocket connection with concurrency limits."""
+        # Check total connection limit
+        if len(self.active_connections) >= self.max_connections:
+            logger.warning(f"Max connections reached: {self.max_connections}")
+            await websocket.close(code=status.WS_1013_TRY_AGAIN_LATER, 
+                                reason="Server at capacity")
+            return False
+        
+        # Check organization limit
+        org_connections = len(self.organization_subscriptions.get(organization_id, set()))
+        if org_connections >= self.max_per_org:
+            logger.warning(f"Max connections for org {organization_id}: {self.max_per_org}")
+            await websocket.close(code=status.WS_1013_TRY_AGAIN_LATER,
+                                reason="Organization connection limit reached")
+            return False
+        
+        # Use semaphore for connection pooling
+        async with self.connection_semaphore:
+            await websocket.accept()
         
         # Store connection
         self.active_connections[user_id] = websocket
@@ -340,7 +367,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
             attempt_data["count"] = 0
         
         attempt_data["count"] += 1
-        if attempt_data["count"] > 100:
+        if attempt_data["count"] > websocket_config.WS_RATE_LIMIT_CONNECTIONS_PER_HOUR:
             logger.warning(f"WebSocket rate limit exceeded for IP {client_ip}",
                          extra={"security_event": "websocket_rate_limit", "client_ip": client_ip})
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Rate limit exceeded")

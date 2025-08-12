@@ -75,8 +75,8 @@ class Settings(BaseSettings):
     
     # Rate Limiting
     rate_limit_enabled: bool = Field(default=True, env="RATE_LIMIT_ENABLED")
-    rate_limit_per_minute: int = Field(default=60, env="RATE_LIMIT_PER_MINUTE")
-    rate_limit_per_hour: int = Field(default=1000, env="RATE_LIMIT_PER_HOUR")
+    rate_limit_per_minute: int = Field(default=200, env="RATE_LIMIT_PER_MINUTE")  # Increased for beta
+    rate_limit_per_hour: int = Field(default=5000, env="RATE_LIMIT_PER_HOUR")    # Increased for beta
     rate_limit_whitelist_ips_str: str = Field(default="", alias="RATE_LIMIT_WHITELIST_IPS")
     
     # CSRF Protection

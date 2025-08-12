@@ -62,9 +62,9 @@ class MLConstants:
 # API/HTTP Constants
 class APIConstants:
     """API and HTTP related constants."""
-    # Rate limiting
-    RATE_LIMIT_PER_MINUTE: Final[int] = 60
-    RATE_LIMIT_PER_HOUR: Final[int] = 1000
+    # Rate limiting - Increased for beta testing
+    RATE_LIMIT_PER_MINUTE: Final[int] = 200  # Increased from 60 for beta
+    RATE_LIMIT_PER_HOUR: Final[int] = 5000   # Increased from 1000 for beta
     
     # Pagination
     DEFAULT_PAGE_SIZE: Final[int] = 20

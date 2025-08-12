@@ -81,10 +81,20 @@ async def lifespan(app: FastAPI):
     from src.api.routers import conversation as conv_router
     from src.services.jwt_rotation_service import start_jwt_rotation_scheduler, stop_jwt_rotation_scheduler
     from src.core.dependencies import initialize_dependencies, cleanup_dependencies
+    from src.integrations.supabase.connection_pool import initialize_db_pool, close_db_pool, get_db_pool
     from src.services.websocket.websocket_manager import cleanup_task
     
     # Initialize core dependencies (cache, etc.)
     await initialize_dependencies()
+    
+    # Initialize database connection pool
+    logger.info("Initializing database connection pool...")
+    try:
+        await initialize_db_pool()
+        pool_stats = get_db_pool().get_pool_stats()
+        logger.info(f"Database pool initialized: {pool_stats}")
+    except Exception as e:
+        logger.warning(f"Database pool initialization failed (non-critical): {e}")
     
     # Create and initialize conversation service
     conversation_service = ConversationService()
@@ -124,6 +134,14 @@ async def lifespan(app: FastAPI):
     
     # Cleanup core dependencies
     await cleanup_dependencies()
+    
+    # Close database connection pool
+    logger.info("Closing database connection pool...")
+    try:
+        await close_db_pool()
+        logger.info("Database pool closed successfully")
+    except Exception as e:
+        logger.warning(f"Error closing database pool: {e}")
     
     # Add cleanup tasks here (close DB connections, etc.)
     logger.info("API shutdown complete")
