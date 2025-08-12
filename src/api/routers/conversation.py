@@ -8,6 +8,11 @@ from datetime import datetime
 
 from src.models.conversation import CustomerData, ConversationState
 from src.services.conversation_service import ConversationService
+from src.api.validators.input_validators import (
+    ConversationStartRequest as ValidatedStartRequest,
+    MessageRequest as ValidatedMessageRequest,
+    InputSanitizer
+)
 
 # Configurar logging
 logger = logging.getLogger(__name__)

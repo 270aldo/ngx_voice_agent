@@ -11,6 +11,7 @@ import { Settings } from './pages/Settings'
 import { Login } from './pages/Login'
 import { useAuth } from './hooks/useAuth'
 import { Toaster } from './components/ui/toaster'
+import { ErrorBoundary, RouteErrorBoundary } from './components/ErrorBoundary'
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth()
@@ -28,27 +29,49 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/" element={
-          <AuthGuard>
-            <WebSocketProvider autoConnect={true}>
-              <Layout />
-            </WebSocketProvider>
-          </AuthGuard>
-        }>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="conversations" element={<Conversations />} />
-          <Route path="analytics" element={<Analytics />} />
-          <Route path="agents" element={<Agents />} />
-          <Route path="settings" element={<Settings />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-      <Toaster />
-    </div>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-black text-white">
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={
+            <AuthGuard>
+              <WebSocketProvider autoConnect={true}>
+                <Layout />
+              </WebSocketProvider>
+            </AuthGuard>
+          }>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={
+              <RouteErrorBoundary>
+                <Dashboard />
+              </RouteErrorBoundary>
+            } />
+            <Route path="conversations" element={
+              <RouteErrorBoundary>
+                <Conversations />
+              </RouteErrorBoundary>
+            } />
+            <Route path="analytics" element={
+              <RouteErrorBoundary>
+                <Analytics />
+              </RouteErrorBoundary>
+            } />
+            <Route path="agents" element={
+              <RouteErrorBoundary>
+                <Agents />
+              </RouteErrorBoundary>
+            } />
+            <Route path="settings" element={
+              <RouteErrorBoundary>
+                <Settings />
+              </RouteErrorBoundary>
+            } />
+          </Route>
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+        <Toaster />
+      </div>
+    </ErrorBoundary>
   )
 }
 
