@@ -11,7 +11,7 @@ from collections import defaultdict
 
 from src.integrations.supabase.client import supabase_client
 from src.services.conversation.tracker import ConversationTracker
-from src.services.ml.conversion_prediction_service import ConversionPredictionService
+from src.services.conversion_prediction_service import ConversionPredictionService
 from src.utils.structured_logging import StructuredLogger
 
 logger = StructuredLogger.get_logger(__name__)

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import React, { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   TrendingUp,
   TrendingDown,
@@ -21,7 +21,12 @@ import {
   Globe,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  FileText,
+  Image,
+  Loader2,
+  Calendar as CalendarIcon,
+  FilterX
 } from 'lucide-react'
 import {
   LineChart as RechartsLineChart,
@@ -51,6 +56,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
+import { Input } from '../components/ui/input'
+import { Label } from '../components/ui/label'
+import { Badge } from '../components/ui/badge'
+import { Switch } from '../components/ui/switch'
 import { analyticsApi } from '../services/api'
 import { useToast } from '../hooks/use-toast'
 
@@ -65,6 +74,34 @@ const CHART_COLORS = {
   gradient: ['#8B5CF6', '#5B21B6'],
   pieColors: ['#8B5CF6', '#5B21B6', '#10B981', '#F59E0B', '#3B82F6', '#EF4444']
 }
+
+// Animation variants
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 }
+}
+
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+}
+
+// Custom date range type
+interface DateRange {
+  from: Date
+  to: Date
+}
+
+// Export format options
+const EXPORT_FORMATS = [
+  { value: 'csv', label: 'CSV', icon: FileText },
+  { value: 'pdf', label: 'PDF', icon: FileText },
+  { value: 'png', label: 'PNG', icon: Image }
+]
 
 // Mock data for development
 const conversionTrendData = [
@@ -183,6 +220,12 @@ export function Analytics() {
   const [metricsData, setMetricsData] = useState<any>(null)
   const [funnelData, setFunnelData] = useState<any[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const [exportFormat, setExportFormat] = useState('csv')
+  const [refreshing, setRefreshing] = useState(false)
+  const [autoRefresh, setAutoRefresh] = useState(false)
+  const [customDateRange, setCustomDateRange] = useState<DateRange | null>(null)
+  const [showCustomRange, setShowCustomRange] = useState(false)
   const { toast } = useToast()
 
   // Load analytics data

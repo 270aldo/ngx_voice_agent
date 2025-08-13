@@ -181,7 +181,7 @@ class ConversationStartRequest(BaseModel):
     """Request model for starting a conversation."""
     customer_name: str = Field(..., min_length=1, max_length=100)
     customer_email: Optional[EmailStr] = None
-    customer_phone: Optional[str] = Field(None, regex=r'^\+?[\d\s\-()]+$', max_length=20)
+    customer_phone: Optional[str] = Field(None, pattern=r'^\+?[\d\s\-()]+$', max_length=20)
     initial_message: Optional[str] = Field(None, max_length=1000)
     platform: Optional[str] = Field(None, max_length=50)
     metadata: Optional[Dict[str, Any]] = None
@@ -211,7 +211,7 @@ class ConversationStartRequest(BaseModel):
 
 class MessageRequest(BaseModel):
     """Request model for sending a message."""
-    conversation_id: str = Field(..., regex=r'^[a-f0-9\-]{36}$')  # UUID format
+    conversation_id: str = Field(..., pattern=r'^[a-f0-9\-]{36}$')  # UUID format
     message: str = Field(..., min_length=1, max_length=4000)
     voice_enabled: bool = Field(False)
     
@@ -226,7 +226,7 @@ class MessageRequest(BaseModel):
 
 class QualificationRequest(BaseModel):
     """Request model for lead qualification."""
-    conversation_id: str = Field(..., regex=r'^[a-f0-9\-]{36}$')
+    conversation_id: str = Field(..., pattern=r'^[a-f0-9\-]{36}$')
     responses: Dict[str, str]
     
     @validator('responses')
@@ -253,7 +253,7 @@ class AnalyticsRequest(BaseModel):
     start_date: datetime
     end_date: datetime
     metrics: List[str] = Field(..., min_items=1, max_items=20)
-    group_by: Optional[str] = Field(None, regex=r'^[a-z_]+$')
+    group_by: Optional[str] = Field(None, pattern=r'^[a-z_]+$')
     filters: Optional[Dict[str, Any]] = None
     
     @validator('end_date')

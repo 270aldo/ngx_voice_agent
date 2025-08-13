@@ -923,6 +923,65 @@ export function Agents() {
                       step={10}
                     />
                   </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Tono</Label>
+                      <span className="text-sm text-gray-400">{config.channels.voice.pitch}x</span>
+                    </div>
+                    <Slider
+                      value={[config.channels.voice.pitch * 100]}
+                      onValueChange={([value]) =>
+                        setConfig(prev => ({
+                          ...prev,
+                          channels: {
+                            ...prev.channels,
+                            voice: { ...prev.channels.voice, pitch: value / 100 }
+                          }
+                        }))
+                      }
+                      min={50}
+                      max={150}
+                      step={10}
+                    />
+                  </div>
+
+                  {/* Voice Preview */}
+                  <div className="space-y-2">
+                    <Label>Vista Previa de Voz</Label>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          // Simulate voice preview
+                          toast({
+                            title: "Vista previa de voz",
+                            description: "Reproduciendo mensaje de ejemplo...",
+                          })
+                        }}
+                      >
+                        <Volume2 className="w-4 h-4 mr-2" />
+                        Probar Voz
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          toast({
+                            title: "Vista previa",
+                            description: "Reproduciendo saludo personalizado...",
+                          })
+                        }}
+                      >
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Probar Saludo
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      Escucha cómo sonará tu agente con la configuración actual
+                    </p>
+                  </div>
                 </>
               )}
             </CardContent>
@@ -1134,6 +1193,127 @@ export function Agents() {
                     <Badge variant="secondary">{count} activas</Badge>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* A/B Testing Configuration */}
+          <Card className="bg-glass border-white/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-electric-violet" />
+                Configuración A/B Testing
+              </CardTitle>
+              <CardDescription>
+                Optimiza automáticamente el rendimiento del agente
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>A/B Testing Automático</Label>
+                  <p className="text-sm text-gray-400">
+                    Prueba diferentes mensajes y estrategias automáticamente
+                  </p>
+                </div>
+                <Switch
+                  checked={config.features.includes('ab-testing')}
+                  onCheckedChange={() => toggleFeature('ab-testing')}
+                />
+              </div>
+              
+              {config.features.includes('ab-testing') && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="space-y-4 p-4 bg-white/5 rounded-lg"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Mensaje de Bienvenida</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between p-2 bg-white/5 rounded">
+                          <span className="text-sm">Versión A (50%)</span>
+                          <Badge variant="secondary">2.3% conversión</Badge>
+                        </div>
+                        <div className="flex items-center justify-between p-2 bg-electric-violet/20 rounded border border-electric-violet/50">
+                          <span className="text-sm">Versión B (50%)</span>
+                          <Badge className="bg-electric-violet">2.8% conversión</Badge>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Estrategia de Cierre</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between p-2 bg-electric-violet/20 rounded border border-electric-violet/50">
+                          <span className="text-sm">Versión A (60%)</span>
+                          <Badge className="bg-electric-violet">4.1% conversión</Badge>
+                        </div>
+                        <div className="flex items-center justify-between p-2 bg-white/5 rounded">
+                          <span className="text-sm">Versión B (40%)</span>
+                          <Badge variant="secondary">3.7% conversión</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-xs text-gray-400">
+                    * Las versiones ganadoras se implementan automáticamente cuando alcanzan significancia estadística
+                  </div>
+                </motion.div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Agent Performance Metrics */}
+          <Card className="bg-glass border-white/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="w-5 h-5 text-electric-violet" />
+                Métricas de Rendimiento
+              </CardTitle>
+              <CardDescription>
+                Rendimiento del agente en las últimas 24 horas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-4 bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-lg border border-green-500/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <CheckCircle className="w-6 h-6 text-green-500" />
+                    <span className="text-2xl font-bold text-white">87%</span>
+                  </div>
+                  <p className="text-sm text-green-100">Tasa de Éxito</p>
+                  <p className="text-xs text-green-200">+5% vs ayer</p>
+                </div>
+                
+                <div className="p-4 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-lg border border-blue-500/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <Clock className="w-6 h-6 text-blue-500" />
+                    <span className="text-2xl font-bold text-white">0.3s</span>
+                  </div>
+                  <p className="text-sm text-blue-100">Tiempo Respuesta</p>
+                  <p className="text-xs text-blue-200">-0.1s vs ayer</p>
+                </div>
+                
+                <div className="p-4 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-lg border border-purple-500/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <Heart className="w-6 h-6 text-purple-500" />
+                    <span className="text-2xl font-bold text-white">9.2</span>
+                  </div>
+                  <p className="text-sm text-purple-100">Satisfacción</p>
+                  <p className="text-xs text-purple-200">+0.3 vs ayer</p>
+                </div>
+                
+                <div className="p-4 bg-gradient-to-br from-orange-500/20 to-orange-600/20 rounded-lg border border-orange-500/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <Users className="w-6 h-6 text-orange-500" />
+                    <span className="text-2xl font-bold text-white">342</span>
+                  </div>
+                  <p className="text-sm text-orange-100">Conversaciones</p>
+                  <p className="text-xs text-orange-200">+23 vs ayer</p>
+                </div>
               </div>
             </CardContent>
           </Card>
