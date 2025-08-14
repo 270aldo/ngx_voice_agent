@@ -8,9 +8,9 @@ import logging
 from datetime import datetime
 
 from ..utils.retry_mechanism import with_retry, RetryConfig, RetryableError
-from ..services.conversation.orchestrator import ConversationOrchestrator
+from .conversation_service import ConversationService
 from ..models.conversation import ConversationState, Message
-from ..integrations.supabase import get_supabase_client
+from ..integrations.supabase import supabase_client
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class ResilientConversationService:
     """Enhanced conversation service with retry mechanisms."""
     
     def __init__(self):
-        self.orchestrator = ConversationOrchestrator()
+        self.orchestrator = ConversationService()
         self.supabase = supabase_client
         
         # Configure retry policies for different operations

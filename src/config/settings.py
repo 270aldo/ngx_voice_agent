@@ -96,8 +96,14 @@ class Settings(BaseSettings):
     
     # Redis
     redis_url: Optional[str] = Field(default="redis://localhost:6379", env="REDIS_URL")
+    redis_host: str = Field(default="localhost", env="REDIS_HOST")
+    redis_port: int = Field(default=6379, env="REDIS_PORT")
+    redis_password: Optional[SecretStr] = Field(default=None, env="REDIS_PASSWORD")
+    redis_db: int = Field(default=0, env="REDIS_DB")
+    redis_ssl: bool = Field(default=False, env="REDIS_SSL")
     redis_pool_size: int = Field(default=10, env="REDIS_POOL_SIZE")
     redis_decode_responses: bool = Field(default=True, env="REDIS_DECODE_RESPONSES")
+    redis_mock_enabled: bool = Field(default=False, env="REDIS_MOCK_ENABLED")
     
     # External APIs
     openai_api_key: Optional[SecretStr] = Field(default=None, env="OPENAI_API_KEY")
@@ -142,6 +148,16 @@ class Settings(BaseSettings):
     feature_ml_optimization: bool = Field(default=True, env="FEATURE_ML_OPTIMIZATION")
     feature_ab_testing: bool = Field(default=True, env="FEATURE_AB_TESTING")
     feature_trial_system: bool = Field(default=True, env="FEATURE_TRIAL_SYSTEM")
+    
+    # Orchestrator Selection Feature Flag
+    use_refactored_orchestrator: bool = Field(default=False, env="USE_REFACTORED_ORCHESTRATOR")
+    
+    # Cache Migration Feature Flag
+    use_consolidated_cache: bool = Field(default=True, env="USE_CONSOLIDATED_CACHE")
+    
+    # ML/NLP Consolidation Feature Flags
+    use_consolidated_ml_service: bool = Field(default=True, env="USE_CONSOLIDATED_ML_SERVICE")
+    use_consolidated_nlp_service: bool = Field(default=True, env="USE_CONSOLIDATED_NLP_SERVICE")
     
     model_config = SettingsConfigDict(
         env_file=".env",

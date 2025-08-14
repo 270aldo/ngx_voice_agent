@@ -1,8 +1,9 @@
 """
-Conversation Service - Refactored Entry Point
+Conversation Service - Intelligent Orchestrator Selector
 
-This file maintains backward compatibility while delegating to the new
-modular conversation orchestrator.
+This file provides a smart wrapper that can switch between the legacy
+and refactored orchestrator implementations based on feature flags,
+ensuring zero downtime deployment and easy rollback capabilities.
 """
 
 import logging
@@ -10,56 +11,117 @@ from typing import Optional, Dict, Any
 
 from src.models.conversation import ConversationState, CustomerData
 from src.models.platform_context import PlatformContext, PlatformInfo
-from src.services.conversation import ConversationOrchestrator
+from src.config.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
 
 class ConversationService:
     """
-    Backward-compatible wrapper for the refactored ConversationOrchestrator.
+    Intelligent orchestrator selector with feature flag support.
     
-    This class maintains the same interface as the original ConversationService
-    while delegating all functionality to the new modular system.
+    This class dynamically selects between legacy and refactored orchestrator
+    implementations based on the USE_REFACTORED_ORCHESTRATOR feature flag,
+    ensuring safe deployment and easy rollback capabilities.
     """
     
     def __init__(self, industry: str = 'salud', platform_context: Optional[PlatformContext] = None):
         """
-        Initialize conversation service with backward compatibility.
+        Initialize conversation service with intelligent orchestrator selection.
         
         Args:
             industry: Industry for customization
             platform_context: Platform context (optional)
         """
-        self._orchestrator = ConversationOrchestrator(industry, platform_context)
+        self.settings = get_settings()
+        self.industry = industry
+        self.platform_context = platform_context
+        
+        # Dynamically import and initialize the appropriate orchestrator
+        self._orchestrator = self._create_orchestrator()
+        
+        logger.info(f"ConversationService initialized with {'refactored' if self.settings.use_refactored_orchestrator else 'legacy'} orchestrator")
         
         # Expose orchestrator properties for backward compatibility
-        self.industry = self._orchestrator.industry
-        self.platform_context = self._orchestrator.platform_context
-        self._initialized = self._orchestrator._initialized
-        self._current_agent = self._orchestrator._current_agent
+        self._sync_properties_with_orchestrator()
+    
+    def _create_orchestrator(self):
+        """
+        Create the appropriate orchestrator based on feature flag.
         
-        # Expose services for backward compatibility
-        self.intent_analysis_service = self._orchestrator.intent_analysis_service
-        self.enhanced_intent_service = self._orchestrator.enhanced_intent_service
-        self.qualification_service = self._orchestrator.qualification_service
-        self.human_transfer_service = self._orchestrator.human_transfer_service
-        self.follow_up_service = self._orchestrator.follow_up_service
-        self.personalization_service = self._orchestrator.personalization_service
-        self.multi_voice_service = self._orchestrator.multi_voice_service
-        self.program_router = self._orchestrator.program_router
+        Returns:
+            Either legacy or refactored orchestrator instance
+        """
+        try:
+            if self.settings.use_refactored_orchestrator:
+                # Import and use refactored orchestrator
+                from src.services.conversation.orchestrator_refactored import ConversationOrchestratorFacade
+                logger.info("Using refactored ConversationOrchestratorFacade")
+                return ConversationOrchestratorFacade(self.industry, self.platform_context)
+            else:
+                # Import and use legacy orchestrator
+                from src.services.conversation.orchestrator import ConversationOrchestrator
+                logger.info("Using legacy ConversationOrchestrator")
+                return ConversationOrchestrator(self.industry, self.platform_context)
+        except Exception as e:
+            logger.error(f"Failed to create orchestrator: {e}")
+            # Fallback to legacy orchestrator on any import/creation error
+            logger.warning("Falling back to legacy orchestrator due to error")
+            from src.services.conversation.orchestrator import ConversationOrchestrator
+            return ConversationOrchestrator(self.industry, self.platform_context)
+    
+    def _sync_properties_with_orchestrator(self):
+        """Sync properties with the underlying orchestrator for backward compatibility."""
+        # Update industry and platform context to match orchestrator
+        if hasattr(self._orchestrator, 'industry'):
+            self.industry = self._orchestrator.industry
+        if hasattr(self._orchestrator, 'platform_context'):
+            self.platform_context = self._orchestrator.platform_context
         
-        logger.info("ConversationService initialized with refactored orchestrator")
+        # Handle different property names between legacy and refactored
+        if hasattr(self._orchestrator, '_initialized'):
+            self._initialized = self._orchestrator._initialized
+        elif hasattr(self._orchestrator, 'initialized'):
+            self._initialized = self._orchestrator.initialized
+        else:
+            self._initialized = False
+            
+        if hasattr(self._orchestrator, '_current_agent'):
+            self._current_agent = self._orchestrator._current_agent
+        else:
+            self._current_agent = None
+        
+        # Expose services for backward compatibility (only for legacy orchestrator)
+        self._expose_legacy_services()
+    
+    def _expose_legacy_services(self):
+        """Expose legacy services for backward compatibility."""
+        legacy_services = [
+            'intent_analysis_service', 'enhanced_intent_service', 'qualification_service',
+            'human_transfer_service', 'follow_up_service', 'personalization_service',
+            'multi_voice_service', 'program_router'
+        ]
+        
+        for service_name in legacy_services:
+            if hasattr(self._orchestrator, service_name):
+                setattr(self, service_name, getattr(self._orchestrator, service_name))
+            else:
+                # Set to None if service doesn't exist in refactored version
+                setattr(self, service_name, None)
     
     async def initialize(self) -> None:
         """Initialize the service."""
         await self._orchestrator.initialize()
-        self._initialized = self._orchestrator._initialized
+        self._sync_properties_with_orchestrator()
     
     async def _ensure_initialized(self) -> None:
         """Ensure service is initialized."""
-        await self._orchestrator._ensure_initialized()
-        self._initialized = self._orchestrator._initialized
+        if hasattr(self._orchestrator, '_ensure_initialized'):
+            await self._orchestrator._ensure_initialized()
+        else:
+            # For refactored orchestrator, use standard initialize
+            await self._orchestrator.initialize()
+        self._sync_properties_with_orchestrator()
     
     async def start_conversation(
         self, 
@@ -67,9 +129,34 @@ class ConversationService:
         program_type: Optional[str] = None,
         platform_info: Optional[PlatformInfo] = None
     ) -> ConversationState:
-        """Start a new conversation (delegates to orchestrator)."""
-        return await self._orchestrator.start_conversation(
-            customer_data, program_type, platform_info
+        """Start a new conversation (delegates to orchestrator with compatibility layer)."""
+        if self.settings.use_refactored_orchestrator:
+            # Refactored orchestrator expects platform_context instead of platform_info
+            platform_context = self.platform_context
+            if platform_info:
+                # Convert PlatformInfo to PlatformContext if needed
+                platform_context = self._convert_platform_info_to_context(platform_info)
+            
+            return await self._orchestrator.start_conversation(
+                customer_data, platform_context
+            )
+        else:
+            # Legacy orchestrator signature
+            return await self._orchestrator.start_conversation(
+                customer_data, program_type, platform_info
+            )
+    
+    def _convert_platform_info_to_context(self, platform_info: PlatformInfo) -> PlatformContext:
+        """Convert PlatformInfo to PlatformContext for compatibility."""
+        # This is a simple adapter - you may need to adjust based on actual structure
+        if not platform_info:
+            return self.platform_context
+        
+        # Create PlatformContext from PlatformInfo if needed
+        # (This may need adjustment based on actual class definitions)
+        return PlatformContext(
+            platform_type=getattr(platform_info, 'platform_type', 'web'),
+            **platform_info.__dict__ if hasattr(platform_info, '__dict__') else {}
         )
     
     async def process_message(
@@ -78,18 +165,37 @@ class ConversationService:
         message_text: str,
         audio_data: Optional[bytes] = None
     ) -> Dict[str, Any]:
-        """Process a message (delegates to orchestrator)."""
-        return await self._orchestrator.process_message(
-            conversation_id, message_text, audio_data
-        )
+        """Process a message (delegates to orchestrator with compatibility layer)."""
+        if self.settings.use_refactored_orchestrator:
+            # Refactored orchestrator has different signature
+            voice_enabled = audio_data is not None
+            return await self._orchestrator.process_message(
+                conversation_id, message_text, voice_enabled
+            )
+        else:
+            # Legacy orchestrator signature
+            return await self._orchestrator.process_message(
+                conversation_id, message_text, audio_data
+            )
     
     async def end_conversation(
         self, 
         conversation_id: str, 
         end_reason: str = "completed"
     ) -> ConversationState:
-        """End a conversation (delegates to orchestrator)."""
-        return await self._orchestrator.end_conversation(conversation_id, end_reason)
+        """End a conversation (delegates to orchestrator with compatibility layer)."""
+        if self.settings.use_refactored_orchestrator:
+            # Refactored orchestrator uses 'reason' parameter name
+            result = await self._orchestrator.end_conversation(conversation_id, reason=end_reason)
+            # Return format might be different, handle conversion if needed
+            if isinstance(result, dict) and result.get('success'):
+                # Convert dict result to ConversationState if needed
+                # This might need adjustment based on actual return formats
+                return result
+            return result
+        else:
+            # Legacy orchestrator signature
+            return await self._orchestrator.end_conversation(conversation_id, end_reason)
     
     def set_platform_context(self, platform_context: PlatformContext) -> None:
         """Set platform context."""

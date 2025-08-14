@@ -148,19 +148,24 @@ class CacheService:
                 decode_responses=decode_responses
             )
         else:
-            self.pool = ConnectionPool(
-                host=host,
-                port=port,
-                password=password,
-                db=db,
-                ssl=ssl,
-                max_connections=pool_size,
-                decode_responses=decode_responses,
-                socket_connect_timeout=5,
-                socket_timeout=5,
-                retry_on_timeout=True,
-                health_check_interval=30
-            )
+            connection_kwargs = {
+                "host": host,
+                "port": port,
+                "password": password,
+                "db": db,
+                "max_connections": pool_size,
+                "decode_responses": decode_responses,
+                "socket_connect_timeout": 5,
+                "socket_timeout": 5,
+                "retry_on_timeout": True,
+                "health_check_interval": 30
+            }
+            
+            # Only add SSL parameter if it's True and supported
+            if ssl:
+                connection_kwargs["ssl"] = ssl
+            
+            self.pool = ConnectionPool(**connection_kwargs)
         
         self.redis: Optional[redis.Redis] = None
         self.is_connected = False

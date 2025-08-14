@@ -19,23 +19,48 @@ Provides:
 - Performance monitoring and drift detection
 """
 
-import logging
 import asyncio
-import pickle
-from typing import Dict, List, Any, Optional, Tuple, Union, Callable
-from datetime import datetime, timedelta
-from dataclasses import dataclass, field
-from enum import Enum
-from abc import ABC, abstractmethod
 import json
-import numpy as np
+import logging
+import pickle
+from abc import ABC, abstractmethod
+from collections import defaultdict, deque
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+import numpy as np
+from sklearn.base import BaseEstimator
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
+from sklearn.model_selection import cross_val_score, train_test_split
+
+from src.core.constants import MLConstants
+from src.integrations.supabase.resilient_client import ResilientSupabaseClient
 from src.models.conversation import ConversationState, CustomerData
 from src.utils.structured_logging import StructuredLogger
-from src.core.constants import MLConstants
 
 logger = StructuredLogger.get_logger(__name__)
+
+# Enhanced error handling
+class MLServiceError(Exception):
+    """Base exception for ML service errors."""
+    pass
+
+class ModelNotFoundError(MLServiceError):
+    """Raised when a requested model is not found."""
+    pass
+
+class ModelTrainingError(MLServiceError):
+    """Raised when model training fails."""
+    pass
+
+class PredictionError(MLServiceError):
+    """Raised when prediction fails."""
+    pass
 
 
 class PredictionType(str, Enum):
@@ -47,6 +72,9 @@ class PredictionType(str, Enum):
     ENGAGEMENT_LEVEL = "engagement_level"
     PRICE_SENSITIVITY = "price_sensitivity"
     DECISION_TIMELINE = "decision_timeline"
+    LEAD_SCORING = "lead_scoring"
+    CHURN_PREDICTION = "churn_prediction"
+    UPSELL_OPPORTUNITY = "upsell_opportunity"
 
 
 class ModelStatus(str, Enum):
@@ -82,6 +110,10 @@ class ModelPerformance:
     prediction_count: int
     last_updated: datetime
     drift_detected: bool = False
+    drift_score: float = 0.0
+    training_samples: int = 0
+    validation_score: float = 0.0
+    feature_importance: Dict[str, float] = field(default_factory=dict)
 
 
 class BasePredictiveModel(ABC):
